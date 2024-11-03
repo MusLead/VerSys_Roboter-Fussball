@@ -69,7 +69,9 @@ def handle_http_request(request):
 # Function to handle GET requests
 def handle_get_request(path):
     # Return the status of the entire system
-    if path == "/status":
+    if path == "/":
+        return f"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n{json.dumps({'Status': 'OK', 'Server': 'Running'})}"
+    elif path == "/status":
         return f"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n{json.dumps(data_store)}"
     # Return the current captain
     elif path == "/captain":
