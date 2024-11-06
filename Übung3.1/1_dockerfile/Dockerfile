@@ -8,7 +8,7 @@ WORKDIR /code
 COPY . .
 
 # our application will listen on port 5000 inside the container
-EXPOSE 5000
+EXPOSE 8080
 
 # run the application
-CMD ["python", "app.py"]
+CMD ["python3","-u", "Simple_Server.py"]

@@ -1,6 +1,8 @@
 # https://hub.docker.com/_/alpine
 FROM alpine:3.16
 
+#TODO: why alpine is better than using pyhon image?
+
 # install pip
 RUN apk add --update-cache \
     py3-pip \
@@ -13,7 +15,7 @@ WORKDIR /code
 COPY . .
 
 # our application will listen on port 5000 inside the container
-EXPOSE 5000
+EXPOSE 8080
 
 # run the application
-CMD ["python3", "Simple_Server.py"]
+CMD ["python3","-u", "Simple_Server.py"]

@@ -17,9 +17,10 @@ data_store = {
 def start_server():
     # Create a TCP/IP socket
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.bind(('127.0.0.1', 8080))  # Bind the socket to port 8080
+    port = 8080
+    server_socket.bind(('0.0.0.0', port))  # Bind to all interfaces
     server_socket.listen(5)  # Listen for incoming connections
-    print("HTTP server running on port 8080")
+    print("HTTP server running on port" + str(port) + "...")   
 
     def signal_handler(sig, frame):
         print('Gracefully shutting down the server...')
@@ -70,7 +71,7 @@ def handle_http_request(request):
 def handle_get_request(path):
     # Return the status of the entire system
     if path == "/":
-        return f"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n{json.dumps({'Status': 'OK', 'Server': 'Running'})}"
+        return f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\n Server is running"
     elif path == "/status":
         return f"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n{json.dumps(data_store)}"
     # Return the current captain
