@@ -7,9 +7,6 @@ WORKDIR /code
 # bundle app source
 COPY . .
 
-# install required packages
-RUN pip install -r requirements.txt
-
 # our application will listen on port 5000 inside the container
 EXPOSE 5000
 
