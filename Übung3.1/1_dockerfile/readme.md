@@ -3,13 +3,13 @@
 In this exercise, we will build a Docker image with a web application, run it, and terminate it finally. This can be done in a local VM or in a Cloud.
 
  1. Have a look to the steps in the Dockerfile to see what happens during the build process.
- 2. Build an image with name `simple-server`:
+ 2. Build an image with name `controller`:
 
   ```sh
-    docker build . -t simple-server
+    docker build . -t controller
   ```
   
- 3. List the images available on your host and verify that there is a `simple-server` image:
+ 3. List the images available on your host and verify that there is a `controller` image:
 
 ```sh
 docker images
@@ -18,7 +18,7 @@ docker images
  4. Launch a container from the image. We expose the port from the container to port 80 on the local machine:
   
   ```sh
-  docker run -p 80:8080 -d simple-server
+  docker run -p 80:8080 -d controller
   ```
  
  5. Check that the container is running and get the id:
@@ -46,10 +46,10 @@ docker exec -it <container id> /bin/sh
 docker stop <container id>
 ```
 
- 9. Now have a look to the steps in Dockerfile-alpine and build a further image `simple-server-alpine` with Alpine Linux as base image:
+ 9. Now have a look to the steps in Dockerfile-alpine and build a further image `controller-alpine` with Alpine Linux as base image:
 
 ```sh
-docker build -f Dockerfile-alpine -t simple-server-alpine .
+docker build -f Dockerfile-alpine -t controller-alpine .
 ```
 
  10. Check that image is like the one with the python3 base image by starting a container and browsing to the index page.
@@ -63,7 +63,7 @@ docker build -f Dockerfile-alpine -t simple-server-alpine .
  13. Remove the images from your host:
   
   ```sh
-  docker rmi simple-server
+  docker rmi controller
   ```
 
 References:
