@@ -1,18 +1,21 @@
 #!/bin/bash
 
-# Navigate to the directory containing TCPClient.java
-cd /Users/aslam/Library/Mobile\ Documents/com~apple~CloudDocs/HS_Fulda/BSc_AInformatik/Verteilte\ System/group15/Übung3.1/1_dockerfile
-
 # Remove all .class files
-rm -f *.class
+rm -f */*.class
 
-# Compile the TCPClient.java
-javac TCP_Client.java
+# Compile the Simple_Client.java
+javac Simple_Client.java
 
 # Check if the compilation was successful
 if [ $? -eq 0 ]; then
-    # Run the TCPClient
-    java TCP_Client
+    # Create the java_class directory if it doesn't exist
+    mkdir -p java_class
+
+    # Move the compiled .class files to the java_class directory
+    mv *.class java_class/
+
+    # Run the Simple_Client from the java_class directory
+    java -cp java_class Simple_Client
 else
     echo "Compilation failed."
 fi

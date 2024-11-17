@@ -48,7 +48,7 @@ def start_server():
 def handle_request(client_socket):
     # Receive the client's request
     request = client_socket.recv(1024).decode('utf-8')
-    # print(f"Received request: {request}")
+    print(f"Received request: {request}")
     
     # Generate an appropriate response
     response = handle_http_request(request)
@@ -67,7 +67,7 @@ def handle_http_request(request):
     # Extract the method and path from the request line
     method, path = headers[0].split(' ')[:2]
 
-    print(f"Received {method} request for {path}")
+    # print(f"Received {method} request for {path}")
     # Handle GET requests
     if method == 'GET':
         return handle_get_request(path)
@@ -97,14 +97,17 @@ def handle_get_request(path):
         return f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nNew captain elected: {data_store['current_captain']}"
     # Return a 404 Not Found response for unsupported paths
     else:
-        return "HTTP/1.1 404 Not Found\r\n\r\n"
+        return "HTTP/1.1 404 Bad Request\r\nContent-Type: text/plain\r\n\r\nNot Found"
 
 # Function to handle POST requests
 def handle_post_request(headers, request):
-    # Extract the Content-Length from the headers
-    content_length = int([header for header in headers if "Content-Length" in header][0].split(':')[1].strip())
-    # Extract the body of the request
-    body = request.split('\r\n\r\n')[1][:content_length]
+    try:
+        # Extract the Content-Length from the headers
+        content_length = int([header for header in headers if "Content-Length" in header][0].split(':')[1].strip())
+        # Extract the body of the request
+        body = request.split('\r\n\r\n')[1][:content_length]
+    except IndexError:
+        return "HTTP/1.1 400 Bad Request\r\n\r\nInvalid request format"
     # Store the dummy data
     data_store["dummy_data"] = body
     return "HTTP/1.1 200 OK\r\n\r\nData received and stored"

@@ -1,5 +1,10 @@
-# https://hub.docker.com/_/python
-FROM python:3.9
+# https://hub.docker.com/_/alpine
+FROM alpine:3.16
+
+# install pip
+RUN apk add --update-cache \
+    py3-pip \
+  && rm -rf /var/cache/apk/*
 
 # create app directory
 WORKDIR /code
