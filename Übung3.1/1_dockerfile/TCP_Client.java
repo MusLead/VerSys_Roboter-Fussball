@@ -6,15 +6,13 @@ class TCP_Client implements Runnable {
     private Socket clientSocket;
 
     public static void main(String args[]) throws Exception {
-        // Handle system call to shutdown the client
-        Runtime.getRuntime().addShutdownHook(new Thread(this));
-        
-        String serverIP = "localhost";
-        int serverPort = 8080;
-        start_client(serverIP, serverPort, clientSocket);
+        TCP_Client client = new TCP_Client();
+        client.start_client("localhost", 8080);
     }
 
-    private static void start_client(String hostIP, int hostPort, Socket clientSocket) throws IOException {
+    private void start_client(String hostIP, int hostPort) throws IOException {
+        // Handle system call to shutdown the client
+        Runtime.getRuntime().addShutdownHook(new Thread(this));
         while (true) {
             clientSocket = new Socket(hostIP, hostPort);
             sendHttpGetRequest(clientSocket);
@@ -27,6 +25,7 @@ class TCP_Client implements Runnable {
         StringBuilder response = new StringBuilder();
         String line;
         while ((line = inFromServer.readLine()) != null) {
+            // add every line to the response
             response.append(line).append("\n");
         }
         String modifiedSentence = response.toString();
