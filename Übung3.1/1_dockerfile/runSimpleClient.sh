@@ -3,6 +3,9 @@
 # Navigate to the directory containing TCPClient.java
 cd /Users/aslam/Library/Mobile\ Documents/com~apple~CloudDocs/HS_Fulda/BSc_AInformatik/Verteilte\ System/group15/Übung3.1/1_dockerfile
 
+# Remove all .class files
+rm -f *.class
+
 # Compile the TCPClient.java
 javac TCP_Client.java
 

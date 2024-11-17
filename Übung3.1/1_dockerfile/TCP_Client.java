@@ -5,7 +5,7 @@ import java.net.*;
 class TCP_Client implements Runnable {
     private Socket clientSocket;
 
-    public void main(String args[]) throws Exception {
+    public static void main(String args[]) throws Exception {
         // Handle system call to shutdown the client
         Runtime.getRuntime().addShutdownHook(new Thread(this));
         
