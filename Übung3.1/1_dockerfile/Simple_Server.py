@@ -5,6 +5,9 @@ import statistics
 import signal
 import sys
 
+# TODO: make sure that many clients can connect to the server at the same time! 
+# and requests are handled concurrently
+
 # Data storage dictionary
 data_store = {
     "robots_active": 5,
@@ -20,7 +23,7 @@ def start_server():
     port = 8080
     server_socket.bind(('0.0.0.0', port))  # Bind to all interfaces
     server_socket.listen(5)  # Listen for incoming connections
-    print("HTTP server running on port" + str(port) + "...")   
+    print("HTTP server running on port " + str(port) + "...")   
 
     def signal_handler(sig, frame):
         print('Gracefully shutting down the server...')
@@ -34,7 +37,9 @@ def start_server():
     while True:
         try:
             client_socket, client_address = server_socket.accept()  # Accept a new connection
+            print(f"Connection from {client_address} established.")
             handle_request(client_socket)  # Handle the client's request
+            print(f"Connection from {client_address} closed.")
         except Exception as e:
             print(f"Error: {e}")
 
@@ -43,6 +48,8 @@ def start_server():
 def handle_request(client_socket):
     # Receive the client's request
     request = client_socket.recv(1024).decode('utf-8')
+    # print(f"Received request: {request}")
+    
     # Generate an appropriate response
     response = handle_http_request(request)
     # Send the response to the client
@@ -52,11 +59,15 @@ def handle_request(client_socket):
 
 # Function to process the HTTP request and generate a response
 def handle_http_request(request):
+    
     # Split the request into lines
     headers = request.split('\r\n')
+    # if len(headers) < 2:
+    #     return "HTTP/1.1 400 Bad Request\r\n\r\n"
     # Extract the method and path from the request line
     method, path = headers[0].split(' ')[:2]
 
+    print(f"Received {method} request for {path}")
     # Handle GET requests
     if method == 'GET':
         return handle_get_request(path)
