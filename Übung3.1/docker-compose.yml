@@ -1,0 +1,31 @@
+services:
+  server:
+    image: ds-gr15/server
+    container_name: server_container
+    ports:
+      - "8080:8080"  # Exposes server's port 8080 to the host
+    restart: always  # Ensures the container restarts automatically if it stops
+    networks:
+      static_network:
+        ipv4_address: 192.168.1.100  # Assigns a static IP to the server
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:8080"]
+    #   interval: 5s
+    #   retries: 5
+    #   start_period: 5s
+    #   timeout: 2s
+
+  client:
+    image: ds-gr15/client
+    container_name: client_container
+    depends_on:
+      - server
+    networks:
+      - static_network
+
+networks:
+  static_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.1.0/24  # Defines the subnet for the network

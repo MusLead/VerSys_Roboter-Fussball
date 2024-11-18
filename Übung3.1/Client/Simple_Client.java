@@ -1,8 +1,16 @@
 import java.io.IOException;
 
 public class Simple_Client {
+    private static String HOST = "localhost";
+    private static final int PORT = 8080;
+
     public static void main(String[] args) throws IOException {
-        
+        // to allow changing the host, if the server is not running on localhost
+        if(args.length == 1){ 
+            HOST = args[0];
+            System.out.println("Actual Host: " + HOST);
+        }
+        test_get("/reset", 200, "Server reset");
         test_get("/", 200, "Server is running");
         test_get("/status", 200, "{\"robots_active\": 5, \"current_captain\": \"Captain A\", \"controller_status\": \"Healthy\", \"dummy_data\": \"\"}");
         test_get("/captain", 200,"{\"captain\": \"Captain A\"}" );
@@ -15,7 +23,8 @@ public class Simple_Client {
     }
 
     private static void test_get(String path, int expStatus, String expResponse) throws IOException {
-        TCP_Client client = new TCP_Client("localhost", 8080);
+        System.out.println("Starting Host: " + HOST);
+        TCP_Client client = new TCP_Client(HOST, PORT);
         HTTPResponse result = client.sendHttpRequest("GET", path, "");
         int status = result.status();
         String response = result.body();
@@ -31,7 +40,7 @@ public class Simple_Client {
     }
 
     private static void test_post(String path, String body, int expStatus, String expResponse) throws IOException {
-        TCP_Client client = new TCP_Client("localhost", 8080);
+        TCP_Client client = new TCP_Client(HOST, PORT);
         HTTPResponse result = client.sendHttpRequest("POST", path, body);
         int status = result.status();
         String response = result.body();

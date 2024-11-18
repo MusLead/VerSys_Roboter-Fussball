@@ -19,12 +19,18 @@ class TCP_Client implements Runnable {
     }
 
     public static void main(String args[]) throws Exception {
+        // for testing purposes
         TCP_Client client = new TCP_Client("localhost", 8080);
         while (true) {
             client.sendHttpGETRequestSystem();
         }
     }
 
+    /**
+     * Reads the server response and returns it as a String.
+     * @return The server response as a String.
+     * @throws IOException
+     */
     private String readServerResponse() throws IOException {
         BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         StringBuilder response = new StringBuilder();
@@ -39,7 +45,8 @@ class TCP_Client implements Runnable {
     }
 
     /**
-     * Sends a HTTP GET request to the server using the system input
+     * Sends a HTTP GET request to the server using the system input.
+     * For testing purposes.
      * @throws IOException
      */
     private void sendHttpGETRequestSystem() throws IOException {
@@ -75,6 +82,12 @@ class TCP_Client implements Runnable {
         return convertResponse(readServerResponse());
     }
 
+    /**
+     * Converts a response from the server into an HTTPResponse object.
+     * @param response The full HTTP response as a String.
+     * @return An HTTPResponse object with the status and body.
+     * @throws IOException
+     */
     public static HTTPResponse convertResponse(String response) throws IOException {
         String[] responseParts = response.split("\n\n", 2);
         if (responseParts.length < 2) 
@@ -91,23 +104,6 @@ class TCP_Client implements Runnable {
         int status = Integer.parseInt(statusLineParts[1]);
         String body = responseParts[1];
         return new HTTPResponse(status, body);
-    }
-
-    /**
-     * Splits an HTTP response into its status (headers) and body parts.
-     * @param response The full HTTP response as a String.
-     * @return A String array with the first element being the status
-     *         (headers) and the second being the body.
-     */
-    public static String[] parseHttpResponse(String response) {
-        // Split the response into two parts at the first blank line
-        String[] parts = response.split("\n\n", 2);
-
-        // Handle cases where body might be missing
-        String status = parts[0];
-        String body = parts.length > 1 ? parts[1] : "";
-
-        return new String[] { status, body };
     }
 
     /**
