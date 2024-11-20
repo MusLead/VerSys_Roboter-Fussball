@@ -5,24 +5,36 @@ import java.net.*;
 /**
  * This code is based on the Lecture of Distributed System and Youtube Video playlist
  * https://youtube.com/playlist?list=PLoW9ZoLJX39Xcdaa4Dn5WLREHblolbji4&si=Mi1OC6Hic_-JA5AR
+ * 
+ * This implementation is based on HTTP-Server with only 2 Protocols (GET and POST)
  */
 class TCP_Client implements Runnable {
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
     private Socket clientSocket;
 
     TCP_Client(String hostIP, int hostPort) throws IOException {
-        clientSocket = new Socket(hostIP, hostPort);
+        try {
+            clientSocket = new Socket(hostIP, hostPort);
+        } catch (IOException e) {
+            System.err.println("Could not connect to server, make sure the server is online and reachable!\n\n");
+            throw e;
+        }
         if(DEBUG) System.out.println("Connected to server: " + clientSocket.getRemoteSocketAddress());
         // Handle system call to shutdown the client
         Runtime.getRuntime().addShutdownHook(new Thread(this));
     }
 
     public static void main(String args[]) throws Exception {
-        // for testing purposes
-        TCP_Client client = new TCP_Client("localhost", 8080);
+        // For testing purposes
         while (true) {
-            client.sendHttpGETRequestSystem();
+            TCP_Client client = new TCP_Client("localhost", 8080);
+            System.out.println("Write the path of the file you want to get from the server: ");
+            BufferedReader strInput = new BufferedReader(new InputStreamReader(System.in));
+            String strPath = strInput.readLine();
+            HTTPResponse httpResponse = client.httpRequest("GET",strPath,"");
+            System.out.println("Status: " + httpResponse.status() + "\nBody: " + httpResponse.body());
+            client.close();
         }
     }
 
@@ -36,7 +48,7 @@ class TCP_Client implements Runnable {
         StringBuilder response = new StringBuilder();
         String line;
         while ((line = inFromServer.readLine()) != null) {
-            // add every line to the response
+            // Add every line of Server-responses to the response
             response.append(line).append("\n");
         }
         String modifiedSentence = response.toString();
@@ -45,31 +57,15 @@ class TCP_Client implements Runnable {
     }
 
     /**
-     * Sends a HTTP GET request to the server using the system input.
-     * For testing purposes.
-     * @throws IOException
-     */
-    private void sendHttpGETRequestSystem() throws IOException {
-        BufferedReader strInput = new BufferedReader(new InputStreamReader(System.in));
-        if(DEBUG) System.out.println("Write the path of the file you want to get from the server: ");
-        // TODO: What is the difference between PrintWriter and DataOutputStream?
-        PrintWriter outToServer = new PrintWriter(clientSocket.getOutputStream(), true);
-        // DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
-        String strPath = strInput.readLine();
-        // Send HTTP GET request
-        String httpRequest = "GET " + strPath + " HTTP/1.1\r\n" +
-                "Host: localhost\r\n" +
-                "Connection: close\r\n\r\n";
-        outToServer.println(httpRequest);
-        if(DEBUG) System.out.println("Sent to server: >\n" + httpRequest + "<");
-        readServerResponse();
-    }
-
-    /**
      * Sends a HTTP GET request to the server using a given path
+     * This Method also wait for the answer from the Server. 
+     * @param protocol either GET or POST will be sent to the Server
+     * @param path of the HTTP
+     * @param body of the request, if the request is POST
+     * @return The Response from the server
      * @throws IOException
      */
-    public HTTPResponse sendHttpRequest(String protocol, String path, String body) throws IOException {
+    public HTTPResponse httpRequest(String protocol, String path, String body) throws IOException {
         PrintWriter outToServer = new PrintWriter(clientSocket.getOutputStream(), true);
         // Send HTTP GET request
         String httpRequest = protocol + " " + path + " HTTP/1.1\r\n" +
@@ -89,6 +85,9 @@ class TCP_Client implements Runnable {
      * @throws IOException
      */
     public static HTTPResponse convertResponse(String response) throws IOException {
+        if (response == null || response.isBlank()) {
+            throw new IOException("Empty or invalid response from server. Check again if the previous socket has been closed.");
+        }
         String[] responseParts = response.split("\n\n", 2);
         if (responseParts.length < 2) 
             throw new IOException("Invalid response from server: \n" + response);
@@ -117,6 +116,7 @@ class TCP_Client implements Runnable {
 
     @Override
     public void run() {
+        // This will be executed for Test-Purposes
         // Handle system call to shutdown the client (this is being implemented in the constructor)
         // https://stackoverflow.com/questions/2541475/capture-sigint-in-java
         try {

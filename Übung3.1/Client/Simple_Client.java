@@ -10,7 +10,7 @@ public class Simple_Client {
             HOST = args[0];
             System.out.println("Actual Host: " + HOST);
         }
-        test_get("/reset", 200, "Server reset");
+        test_get("/reset", 205, "");
         test_get("/", 200, "Server is running");
         test_get("/status", 200, "{\"robots_active\": 5, \"current_captain\": \"Captain A\", \"controller_status\": \"Healthy\", \"dummy_data\": \"\"}");
         test_get("/captain", 200,"{\"captain\": \"Captain A\"}" );
@@ -25,7 +25,7 @@ public class Simple_Client {
     private static void test_get(String path, int expStatus, String expResponse) throws IOException {
         System.out.println("Starting Host: " + HOST);
         TCP_Client client = new TCP_Client(HOST, PORT);
-        HTTPResponse result = client.sendHttpRequest("GET", path, "");
+        HTTPResponse result = client.httpRequest("GET", path, "");
         int status = result.status();
         String response = result.body();
 
@@ -41,7 +41,7 @@ public class Simple_Client {
 
     private static void test_post(String path, String body, int expStatus, String expResponse) throws IOException {
         TCP_Client client = new TCP_Client(HOST, PORT);
-        HTTPResponse result = client.sendHttpRequest("POST", path, body);
+        HTTPResponse result = client.httpRequest("POST", path, body);
         int status = result.status();
         String response = result.body();
 

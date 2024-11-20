@@ -95,6 +95,10 @@ def handle_get_request(path):
     elif path == "/election":
         data_store['current_captain'] = "Captain B"
         return f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nNew captain elected: {data_store['current_captain']}"
+    elif path == "/reset":
+        data_store['current_captain'] = "Captain A"
+        data_store['dummy_data'] = ""
+        return f"HTTP/1.1 205 Reset Content\r\nContent-Type: application/json\r\n\r\n"
     # Return a 404 Not Found response for unsupported paths
     else:
         return "HTTP/1.1 404 Bad Request\r\nContent-Type: text/plain\r\n\r\nNot Found"
