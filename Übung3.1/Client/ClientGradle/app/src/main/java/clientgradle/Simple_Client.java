@@ -1,30 +1,14 @@
+package clientgradle;
+
 import java.io.IOException;
 
 public class Simple_Client {
-    private static String HOST = "localhost";
+    protected static String host = "localhost";
     private static final int PORT = 8080;
 
-    public static void main(String[] args) throws IOException {
-        // to allow changing the host, if the server is not running on localhost
-        if(args.length == 1){ 
-            HOST = args[0];
-            System.out.println("Actual Host: " + HOST);
-        }
-        test_get("/reset", 205, "");
-        test_get("/", 200, "Server is running");
-        test_get("/status", 200, "{\"robots_active\": 5, \"current_captain\": \"Captain A\", \"controller_status\": \"Healthy\", \"dummy_data\": \"\"}");
-        test_get("/captain", 200,"{\"captain\": \"Captain A\"}" );
-        test_get("/health", 200, "Controller is Healthy");
-        test_get("/election", 200, "New captain elected: Captain B");
-        test_get("/unknown", 404, "Not Found");
-        
-        test_post("/", "{\"dummy_data\": \"test data\"}", 200, "Data received and stored");
-
-    }
-
-    private static void test_get(String path, int expStatus, String expResponse) throws IOException {
-        System.out.println("Starting Host: " + HOST);
-        TCP_Client client = new TCP_Client(HOST, PORT);
+    public static void test_get(String path, int expStatus, String expResponse) throws IOException {
+        System.out.println("Starting Host: " + host);
+        TCP_Client client = new TCP_Client(host, PORT);
         HTTPResponse result = client.httpRequest("GET", path, "");
         int status = result.status();
         String response = result.body();
@@ -39,8 +23,8 @@ public class Simple_Client {
         client.close();
     }
 
-    private static void test_post(String path, String body, int expStatus, String expResponse) throws IOException {
-        TCP_Client client = new TCP_Client(HOST, PORT);
+    public static void test_post(String path, String body, int expStatus, String expResponse) throws IOException {
+        TCP_Client client = new TCP_Client(host, PORT);
         HTTPResponse result = client.httpRequest("POST", path, body);
         int status = result.status();
         String response = result.body();

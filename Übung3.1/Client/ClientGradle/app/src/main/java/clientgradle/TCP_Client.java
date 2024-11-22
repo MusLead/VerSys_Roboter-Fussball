@@ -1,3 +1,4 @@
+package clientgradle;
 
 import java.io.*;
 import java.net.*;
@@ -10,7 +11,7 @@ import java.net.*;
  */
 class TCP_Client implements Runnable {
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     private Socket clientSocket;
 
     TCP_Client(String hostIP, int hostPort) throws IOException {

@@ -13,8 +13,7 @@ WORKDIR /code
 COPY . .
 
 # our application will listen on port 5000 inside the container
-EXPOSE 8080
-
+# EXPOSE 8080
 
 # add -u flag to avoid buffering (print output immediately in the docker console)
 # run the application

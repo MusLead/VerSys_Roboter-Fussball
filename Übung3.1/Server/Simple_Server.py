@@ -126,16 +126,16 @@ def measure_rtt():
     rtt = end_time - start_time
     return rtt  # Return the RTT
 
-# Measure RTT for 10 iterations
-rtt_measurements = [measure_rtt() for _ in range(10)]
-# Calculate statistical metrics
-mean_rtt = statistics.mean(rtt_measurements)
-median_rtt = statistics.median(rtt_measurements)
-std_dev_rtt = statistics.stdev(rtt_measurements)
-# Print the results
-print(f"Mean RTT: {mean_rtt:.4f} seconds")
-print(f"Median RTT: {median_rtt:.4f} seconds")
-print(f"Standard Deviation RTT: {std_dev_rtt:.4f} seconds")
+# # Measure RTT for 10 iterations
+# rtt_measurements = [measure_rtt() for _ in range(10)]
+# # Calculate statistical metrics
+# mean_rtt = statistics.mean(rtt_measurements)
+# median_rtt = statistics.median(rtt_measurements)
+# std_dev_rtt = statistics.stdev(rtt_measurements)
+# # Print the results
+# print(f"Mean RTT: {mean_rtt:.4f} seconds")
+# print(f"Median RTT: {median_rtt:.4f} seconds")
+# print(f"Standard Deviation RTT: {std_dev_rtt:.4f} seconds")
 
 # Start the server
 if __name__ == "__main__":

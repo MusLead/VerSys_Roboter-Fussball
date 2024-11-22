@@ -2,25 +2,35 @@
 
 ## Deployment and Server
 
-In this exercise we have two containers `Server` and `Client`. 
+In this exercise we have two containers `Server` and `Client`.
 They are a simple HTTP server-client communication that will be used for the future Task.
 The configuration within the docker-compose allows the Server to be accessed within a Web-Browser.
 To deploy these containers, two command needs to be executed:
 
 1. Build the image (You only need once, as long as the image has been created loacally)
+
+For MacOS
+
 ```sh
-./build.sh
+docker compose build
 ```
-but make sure that the .sh file has been given permission using `chmod u+x build.sh`
+
+For Linux
+
+```sh
+docker-compose build
+```
 
 2. Deploy the Containers
 
 For MacOS
+
 ```sh
 docker compose up -d
 ```
 
 For Linux
+
 ```sh
 docker-compose up -d
 ```
@@ -35,9 +45,9 @@ You could also try to request GET HTTP using `http://localhost:8080` on your loc
 
 ## Client
 
-After the deployment, the Client will execute the java program after 10 Seconds. 
-This will make sure that the Server is properly running after the deployment 
-and the communication can be established. Without this naive approach (execute after 10 seconds), 
+After the deployment, the Client will execute the java program after 10 Seconds.
+This will make sure that the Server is properly running after the deployment
+and the communication can be established. Without this naive approach (execute after 10 seconds),
 the connection might be failed, and the deployment of Client could be disturbed.
 
 With this command below you could see the result of the Client deployment:
@@ -60,82 +70,71 @@ Pass
 
 ## Closing Deployment
 
-To shutdown the containers it could be easily done using a simple line of code below. 
+To shutdown the containers it could be easily done using a simple line of code below.
 The containers will also be deleted by default
 
 For MacOS
+
 ```sh
 docker compose down -d
 ```
 
 For Linux
+
 ```sh
 docker-compose down -d
 ```
 
+## Additional Information
 
-In this exercise, we will build a Docker image with a web application, run it, and terminate it finally. This can be done in a local VM or in a Cloud.
-
- 1. Have a look to the steps in the Dockerfile to see what happens during the build process.
- 2. Build an image with name `controller`:
-
-  ```sh
-    docker build . -t controller
-  ```
-  
- 3. List the images available on your host and verify that there is a `controller` image:
+- List the images available on your host and verify that there is a `controller` image:
 
   ```sh
   docker images
   ```
 
- 4. Launch a container from the image. We expose the port from the container to port 80 on the local machine:
-  
-  ```sh
-  docker run -p 80:8080 -d controller
-  ```
-
- 5. Check that the container is running and get the id:
+- Check that the container is running and get the id:
   
   ```sh
   docker ps -a
   ```
 
- 6. Now we check that the service we just created by opening `http://hostname` in a webbrowser.
- 7. Let's enter the container:
+- Entering the container:
 
   ```sh
   docker exec -it <container id> /bin/bash
   ```
 
-or if it does not work, then
+  or if it does not work, then
 
   ```sh
   docker exec -it <container id> /bin/sh
   ```
 
- 8. Stop the container:
+- Stop the container:
 
   ```sh
   docker stop <container id>
   ```
 
- 9. Remove the containers:
+- Remove the container:
   
   ```sh
   docker rm <container id>
   ```
 
- 10. Remove the images from your host:
+- Remove the images from your host:
   
   ```sh
-  docker rmi controller
+  docker rmi <name of the image>
   ```
 
-References:
+## References
 
 - <https://www.kirilv.com/canvas-confetti/>
 - <https://www.docker.com/>
 - <https://hub.docker.com>
 - <https://alpinelinux.org/>
 - <https://pkgs.alpinelinux.org/packages>
+- <https://www.baeldung.com/gradle-command-line-arguments>
+- <https://hub.docker.com/_/eclipse-temurin>

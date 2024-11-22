@@ -1,4 +1,0 @@
-services:
-  base:
-    build: .
-    image: ds-gr15/server
