@@ -1,5 +1,5 @@
 # https://hub.docker.com/_/alpine
-FROM alpine:3.16
+FROM alpine:latest
 
 # install pip
 RUN apk add --update-cache \
@@ -12,11 +12,9 @@ WORKDIR /code
 # bundle app source
 COPY . .
 
-# install required packages
-#RUN pip install -r requirements.txt
-
 # our application will listen on port 5000 inside the container
-EXPOSE 5000
+# EXPOSE 8080
 
+# add -u flag to avoid buffering (print output immediately in the docker console)
 # run the application
-CMD ["python3", "Simple_Server.py"]
+CMD ["python3","-u", "Simple_Server.py"]
