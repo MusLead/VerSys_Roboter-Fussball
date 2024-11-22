@@ -12,6 +12,13 @@ public class Simple_Client {
     protected static String host = "localhost";
     private static final int PORT = 8080;
 
+    /**
+     * Sends a GET request to the server with the given path, and prints the results.
+     * @param path the path of the GET request
+     * @param expStatus the expected status code of the server response
+     * @param expResponse the expected response body of the server
+     * @throws IOException
+     */
     public static void test_get(String path, int expStatus, String expResponse) throws IOException {
         System.out.println("Starting Host: " + host);
         TCP_Client client = new TCP_Client(host, PORT);
@@ -29,6 +36,14 @@ public class Simple_Client {
         client.close();
     }
 
+    /**
+     * Sends a POST request to the server with the given path and body, and prints the results.
+     * @param path the path of the POST request
+     * @param body the body of the POST request
+     * @param expStatus the expected status code of the server response
+     * @param expResponse the expected response body of the server
+     * @throws IOException
+     */
     public static void test_post(String path, String body, int expStatus, String expResponse) throws IOException {
         TCP_Client client = new TCP_Client(host, PORT);
         HTTPResponse result = client.httpRequest("POST", path, body);
@@ -45,6 +60,14 @@ public class Simple_Client {
         client.close();
     }
 
+    /**
+     * Sends a POST request to the server with the given path and body, and measures the Round-Trip Time (RTT) of the request.
+     * @param path the path of the POST request
+     * @param body the body of the POST request
+     * @param expStatus the expected status code of the server response
+     * @param expResponse the expected response body of the server
+     * @throws IOException
+     */
     public static void test_post_with_rtt(String path, String body, int expStatus, String expResponse) throws IOException {
         List<Long> rtts = new ArrayList<>();
         int iterations = 10; // Anzahl der Wiederholungen
@@ -76,25 +99,25 @@ public class Simple_Client {
     /**
      * Evaluates and prints the statistics of Round-Trip Times (RTTs) from a list of RTT values.
      *
-     * @param rtts a list of RTT values in milliseconds
-     * 
      * The method calculates and prints the following statistics:
      * - Total number of RTT values
      * - Mean RTT
-     * - Variance of RTTs: A measure of how much the RTT values deviate from the mean RTT.
-     * - Standard deviation of RTTs: The square root of the variance, which quantifies the average deviation of each RTT from the mean RTT in the same units (milliseconds).
+     * - The longest and shortest RTT values
      * - The list of RTT values
+     *
+     * @param rtts a list of RTT values in milliseconds
+     * 
      */
     private static void evaluateStatistics(List<Long> rtts) {
         double mean = rtts.stream().mapToLong(Long::longValue).average().orElse(0.0);
-        double variance = rtts.stream().mapToDouble(rtt -> Math.pow(rtt - mean, 2)).sum() / rtts.size();
-        double stdDev = Math.sqrt(variance);
+        double longest = rtts.stream().mapToLong(Long::longValue).max().orElse(0);
+        double shortest = rtts.stream().mapToLong(Long::longValue).min().orElse(0);
 
         System.out.println("\n--- RTT Statistics ---");
         System.out.println("Total Runs: " + rtts.size());
         System.out.println("Mean RTT: " + mean + " ms");
-        System.out.println("Variance: " + variance + " ms²");
-        System.out.println("Standard Deviation: " + stdDev + " ms");
+        System.out.println("Longest RTT: " + longest + " ms");
+        System.out.println("Shortest RTT: " + shortest + " ms");
         System.out.println("RTTs: " + rtts);
         System.out.println("-----------------------");
     }

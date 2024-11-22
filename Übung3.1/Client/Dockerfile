@@ -10,13 +10,11 @@ COPY ClientGradle .
 # # Compile the Java application with preview features enabled
 RUN ./gradlew build
 
-# Define the server IP as an environment variable
-ENV SERVER_IP=192.168.1.100
-
 # Run the Java application
 # To avoid this message: 
 # "Starting a Gradle Daemon, 1 incompatible and 1 stopped Daemons could not be reused"
 # We add the --no-daemon flag
+# The server IP is 192.168.1.100
 
 # Run the Java application
-CMD ["sh", "-c", "./gradlew run --no-daemon --args='$SERVER_IP' & tail -f /dev/null"]
+CMD ["sh", "-c", "./gradlew run --no-daemon --args='192.168.1.100' & tail -f /dev/null"]

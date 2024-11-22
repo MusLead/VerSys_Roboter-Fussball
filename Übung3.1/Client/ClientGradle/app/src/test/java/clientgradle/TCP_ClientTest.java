@@ -60,6 +60,11 @@ class TCP_ClientTest {
     }
 
     @Test
+    /**
+     * Test the HTTP request functionality of the TCP_Client
+     * when the server is reachable.
+     * @throws Exception
+     */
     void testHttpRequest() throws Exception {
         // Test the HTTP request functionality of the TCP_Client
         TCP_Client client = new TCP_Client("localhost", TEST_PORT);
@@ -73,6 +78,10 @@ class TCP_ClientTest {
     }
 
     @Test
+    /**
+     * Test the behavior of the TCP_Client 
+     * when the server is unreachable.
+     */
     void testServerConnectionFailure() {
         // Test client behavior when the server is unreachable
         Exception exception = assertThrows(IOException.class, () -> {
@@ -82,6 +91,11 @@ class TCP_ClientTest {
     }
 
     @Test
+    /**
+     * Test the HTTP request functionality of the TCP_Client
+     * when the server sends an invalid response.
+     * @throws Exception
+     */
     void testInvalidServerResponse() throws Exception {
         // Simulate an invalid server response
         try (ServerSocket mockServerSocket = new ServerSocket(8082)) {

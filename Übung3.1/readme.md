@@ -1,72 +1,73 @@
 # Übung 3.1
 
-## Deployment and Server
+In this exercise we have two containers, `Server` and `Client`. They are a simple HTTP server-client communication that will be used for the future task.
 
-In this exercise we have two containers `Server` and `Client`.
-They are a simple HTTP server-client communication that will be used for the future Task.
-The configuration within the docker-compose allows the Server to be accessed within a Web-Browser.
-To deploy these containers, two command needs to be executed:
+## Deployment
+
+The configuration within `docker-compose.yml` allows the server to be accessed within a web browser.
+To deploy these containers, two commands must be executed:
 
 1. Build the image (You only need once, as long as the image has been created loacally)
 
-For MacOS
+    For MacOS
 
-```sh
-docker compose build
-```
+    ```sh
+    docker compose build
+    ```
 
-For Linux
+    For Linux
 
-```sh
-docker-compose build
-```
+    ```sh
+    docker-compose build
+    ```
 
 2. Deploy the Containers
 
-For MacOS
+    For MacOS
 
-```sh
-docker compose up -d
-```
+    ```sh
+    docker compose up -d
+    ```
 
-For Linux
+    For Linux
 
-```sh
-docker-compose up -d
-```
+    ```sh
+    docker-compose up -d
+    ```
 
-3. You could Check the containers are running and get the id and the port:
+3. You could check the containers are running, get the id and the port:
   
+    ```sh
+    docker ps -a
+    ```
+
+## Server and Client
+
+The server is deployed first, followed by the client. Since the server must be online before the client can send an HTTP request, and considering the client's build, testing, and execution time using Gradle, there is no need to wait after starting the server before running the client.
+
+With this command below you could see the result of the client deployment:
+
 ```sh
-docker ps -a
+docker logs client_container
 ```
 
-You could also try to request GET HTTP using `http://localhost:8080` on your local computer.
-
-## Client
-
-After the deployment, the Client will execute the java program after 10 Seconds.
-This will make sure that the Server is properly running after the deployment
-and the communication can be established. Without this naive approach (execute after 10 seconds),
-the connection might be failed, and the deployment of Client could be disturbed.
-
-With this command below you could see the result of the Client deployment:
+You should see such a result below from the `client_container`
 
 ```sh
-docker logs <container_name_or_id>
-```
-
-You shoudl see such a result below
-
-```sh
-Actual Host: 192.168.1.100
-Starting Host: 192.168.1.100
 POST /:
 Expected Status: 200, Actual Status: 200
 Expected Response: Server is running, Actual Response:  Server is running
 
 Pass
 ```
+
+Also, with this command below you could see the requests and the logs of the server deployment:
+
+```sh
+docker logs server_container
+```
+
+You could also try to request GET HTTP to the server using `http://localhost:8080` on your local computer.
 
 ## Closing Deployment
 
@@ -91,12 +92,6 @@ docker-compose down -d
 
   ```sh
   docker images
-  ```
-
-- Check that the container is running and get the id:
-  
-  ```sh
-  docker ps -a
   ```
 
 - Entering the container:

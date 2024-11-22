@@ -27,7 +27,7 @@ class TestHTTPServer(unittest.TestCase):
         """
         cls.shutdown_event.clear()
         cls.server_thread = threading.Thread(
-            target=start_server, args=(cls.shutdown_event,), daemon=True
+            target=test_start_server, args=(cls.shutdown_event,), daemon=True
         )
         cls.server_thread.start()
         time.sleep(1)  # Give the server time to start

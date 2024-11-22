@@ -7,7 +7,7 @@ import java.net.*;
  * This code is based on the Lecture of Distributed System and Youtube Video playlist
  * https://youtube.com/playlist?list=PLoW9ZoLJX39Xcdaa4Dn5WLREHblolbji4&si=Mi1OC6Hic_-JA5AR
  * 
- * This implementation is based on HTTP-Server with only 2 Protocols (GET and POST)
+ * This program implementation is based on REST-HTTP-API with only 2 Protocols (GET and POST)
  */
 class TCP_Client implements Runnable {
 
@@ -26,6 +26,11 @@ class TCP_Client implements Runnable {
         Runtime.getRuntime().addShutdownHook(new Thread(this));
     }
 
+    /**
+     * Main method to test the client using the command line.
+     * @param args not used! just standard main method parameter
+     * @throws Exception
+     */
     public static void main(String  args[]) throws Exception {
         // For testing purposes
         while (true) {
@@ -40,7 +45,7 @@ class TCP_Client implements Runnable {
     }
 
     /**
-     * Reads the server response and returns it as a String.
+     * Recieve the server response and returns it as a String.
      * @return The server response as a String.
      * @throws IOException
      */
@@ -84,7 +89,7 @@ class TCP_Client implements Runnable {
     }
 
     /**
-     * Converts a response from the server into an HTTPResponse object.
+     * Check and converts a response from the server into an HTTPResponse object if valid.
      * @param response The full HTTP response as a String.
      * @return An HTTPResponse object with the status and body.
      * @throws IOException
