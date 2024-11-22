@@ -7,7 +7,7 @@ In this exercise we have two containers, `Server` and `Client`. They are a simpl
 The configuration within `docker-compose.yml` allows the server to be accessed within a web browser.
 To deploy these containers, two commands must be executed:
 
-1. Build the image (You only need once, as long as the image has been created loacally)
+1. Build the image (You only need once, as long as the image has been created locally)
 
     For MacOS
 
