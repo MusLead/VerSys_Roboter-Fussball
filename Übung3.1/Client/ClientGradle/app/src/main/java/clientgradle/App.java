@@ -23,5 +23,6 @@ public class App {
         test_get("/unknown", 404, "Not Found");
 
         test_post("/", "{\"dummy_data\": \"test data\"}", 200, "Data received and stored");
+        test_post_with_rtt("/", "{\"dummy_data\":\"rtt testing\"}", 200, "Data received and stored");
     }
 }

@@ -5,9 +5,6 @@ import statistics
 import signal
 import sys
 
-# TODO: make sure that many clients can connect to the server at the same time! 
-# and requests are handled concurrently
-
 # Data storage dictionary
 data_store = {
     "robots_active": 5,
@@ -16,32 +13,72 @@ data_store = {
     "dummy_data": ""
 }
 
+server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+def signal_handler(sig, frame):
+    print('Gracefully shutting down the server...')
+    server_socket.close()  # Close the server socket
+    sys.exit(0)  # Exit the program
+
 # Function to start the HTTP server
 def start_server():
-    # Create a TCP/IP socket
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    port = 8080
-    server_socket.bind(('0.0.0.0', port))  # Bind to all interfaces
-    server_socket.listen(5)  # Listen for incoming connections
-    print("HTTP server running on port " + str(port) + "...")   
+    """
+    Start the HTTP server and handle incoming client requests. This function runs indefinitely until an exception occurs.
+    """
+    try:
+        # Create a TCP/IP socket
+        port = 8080
+        server_socket.bind(('0.0.0.0', port))  # Bind to all interfaces
+        server_socket.listen(5)  # Listen for incoming connections
+        print("HTTP server running on port " + str(port) + "...")   
 
-    def signal_handler(sig, frame):
-        print('Gracefully shutting down the server...')
-        server_socket.close()  # Close the server socket
-        sys.exit(0)  # Exit the program
+        while True:
+            try:
+                client_socket, client_address = server_socket.accept()  # Accept a new connection
+                print(f"Connection from {client_address} established.")
+                handle_request(client_socket)  # Handle the client's request
+                print(f"Connection from {client_address} closed.")
+            except socket.timeout:
+                continue  # Timeout allows checking the shutdown even
+            except Exception as e:
+                print(f"Error: {e}")
+    except Exception as e:
+        print(f"Server error: {e}")
+    finally:
+        print("Shutting down server...")
+        server_socket.close()
 
-    # Register the signal handler for SIGINT (Ctrl + C) and SIGTERM
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
+def test_start_server(shutdown_event):
+    """
+    Start the HTTP server with a shutdown event to allow graceful termination.
+    The only difference between this function and the previous one is the addition of the shutdown_event parameter.
+    This function is being used in the test cases to start the server in a separate thread.
+    """
+    
+    try:
+        # Create a TCP/IP socket and bind to a port
+        port = 8080
+        server_socket.bind(('0.0.0.0', port))  # Bind to all interfaces
+        server_socket.listen(5)  # Listen for incoming connections
+        print(f"HTTP server running on port {port}...")
 
-    while True:
-        try:
-            client_socket, client_address = server_socket.accept()  # Accept a new connection
-            print(f"Connection from {client_address} established.")
-            handle_request(client_socket)  # Handle the client's request
-            print(f"Connection from {client_address} closed.")
-        except Exception as e:
-            print(f"Error: {e}")
+        while not shutdown_event.is_set():  # Check the shutdown event
+            try:
+                server_socket.settimeout(1.0)  # Allow periodic checks for shutdown
+                client_socket, client_address = server_socket.accept()
+                print(f"Connection from {client_address} established.")
+                handle_request(client_socket)  # Handle the client's request
+                print(f"Connection from {client_address} closed.")
+            except socket.timeout:
+                continue  # Timeout allows checking the shutdown event
+            except Exception as e:
+                print(f"Error handling connection: {e}")
+                break
+    except Exception as e:
+        print(f"Server error: {e}")
+    finally:
+        print("Shutting down server...")
+        server_socket.close()
 
 
 # Function to handle incoming client requests
@@ -116,15 +153,15 @@ def handle_post_request(headers, request):
     data_store["dummy_data"] = body
     return "HTTP/1.1 200 OK\r\n\r\nData received and stored"
 
-# Function to measure the round-trip time (RTT) of an HTTP POST request
-def measure_rtt():
-    start_time = time.time()  # Record the start time
-    # Simulate an HTTP POST request with a delay
-    time.sleep(0.1)  # Add a delay to simulate network latency
-    end_time = time.time()  # Record the end time
-    # Calculate the RTT
-    rtt = end_time - start_time
-    return rtt  # Return the RTT
+# # Function to measure the round-trip time (RTT) of an HTTP POST request
+# def measure_rtt():
+#     start_time = time.time()  # Record the start time
+#     # Simulate an HTTP POST request with a delay
+#     time.sleep(0.1)  # Add a delay to simulate network latency
+#     end_time = time.time()  # Record the end time
+#     # Calculate the RTT
+#     rtt = end_time - start_time
+#     return rtt  # Return the RTT
 
 # # Measure RTT for 10 iterations
 # rtt_measurements = [measure_rtt() for _ in range(10)]
@@ -139,4 +176,8 @@ def measure_rtt():
 
 # Start the server
 if __name__ == "__main__":
+    # Register the signal handler for SIGINT (Ctrl + C) and SIGTERM
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
     start_server()
+

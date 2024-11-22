@@ -26,7 +26,7 @@ class TCP_Client implements Runnable {
         Runtime.getRuntime().addShutdownHook(new Thread(this));
     }
 
-    public static void main(String args[]) throws Exception {
+    public static void main(String  args[]) throws Exception {
         // For testing purposes
         while (true) {
             TCP_Client client = new TCP_Client("localhost", 8080);
@@ -48,9 +48,13 @@ class TCP_Client implements Runnable {
         BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         StringBuilder response = new StringBuilder();
         String line;
-        while ((line = inFromServer.readLine()) != null) {
-            // Add every line of Server-responses to the response
-            response.append(line).append("\n");
+        try {
+            while ((line = inFromServer.readLine()) != null) {
+                // Add every line of Server-responses to the response
+                response.append(line).append("\n");
+            }
+        } catch (Exception e) {
+            System.err.println("Error reading from server: " + e.getMessage());
         }
         String modifiedSentence = response.toString();
         if(DEBUG) System.out.println("Response from server: >\n" + modifiedSentence + "<");
