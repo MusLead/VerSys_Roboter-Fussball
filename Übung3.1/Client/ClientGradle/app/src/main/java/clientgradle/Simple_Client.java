@@ -79,12 +79,12 @@ public class Simple_Client {
 
             int status = result.status();
             String response = result.body();
-            long rtt = (endTime - startTime) / 1_000_000; // Zeit in Millisekunden
+            long rtt = (endTime - startTime); // Zeit in Nanosekunden
             rtts.add(rtt);
 
             String resultStatus = (status == expStatus && response.contains(expResponse)) ? "Pass" : "FAIL!!!!!!";
             System.out.println("POST " + path + " (Run " + (i + 1) + "):");
-            System.out.println("RTT: " + rtt + " ms");
+            System.out.println("RTT: " + rtt + " ns");
             System.out.println("Expected Status: " + expStatus + ", Actual Status: " + status);
             System.out.println("Expected Response: " + expResponse + ", Actual Response: " + response);
             System.out.println(resultStatus);
@@ -109,16 +109,16 @@ public class Simple_Client {
      * 
      */
     private static void evaluateStatistics(List<Long> rtts) {
-        double mean = rtts.stream().mapToLong(Long::longValue).average().orElse(0.0);
-        double longest = rtts.stream().mapToLong(Long::longValue).max().orElse(0);
-        double shortest = rtts.stream().mapToLong(Long::longValue).min().orElse(0);
+        double mean = (double) rtts.stream().mapToLong(Long::longValue).average().orElse(0.0)/1_000_000;
+        double longest = (double) rtts.stream().mapToLong(Long::longValue).max().orElse(0)/1_000_000;
+        double shortest = (double) rtts.stream().mapToLong(Long::longValue).min().orElse(0)/1_000_000;
 
         System.out.println("\n--- RTT Statistics ---");
         System.out.println("Total Runs: " + rtts.size());
-        System.out.println("Mean RTT: " + mean + " ms");
-        System.out.println("Longest RTT: " + longest + " ms");
-        System.out.println("Shortest RTT: " + shortest + " ms");
-        System.out.println("RTTs: " + rtts);
+        System.out.printf("Mean RTT: %.3f ms%n", mean);
+        System.out.printf("Longest RTT: %.3f ms%n", longest);
+        System.out.printf("Shortest RTT: %.3f ms%n", shortest);
+        System.out.println("RTTs in ns: " + rtts);
         System.out.println("-----------------------");
     }
 
