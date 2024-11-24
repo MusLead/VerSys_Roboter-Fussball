@@ -77,13 +77,13 @@ The containers will also be deleted by default
 For MacOS
 
 ```sh
-docker compose down -d
+docker compose down
 ```
 
 For Linux
 
 ```sh
-docker-compose down -d
+docker-compose down
 ```
 
 ## Additional Information
