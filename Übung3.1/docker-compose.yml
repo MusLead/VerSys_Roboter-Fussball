@@ -1,7 +1,7 @@
 services:
   server:
     build:
-      context: ./server
+      context: ./Server
       dockerfile: Dockerfile
     image: ds-gr15/server
     container_name: server_container
@@ -14,7 +14,7 @@ services:
 
   client:
     build:
-      context: ./client
+      context: ./Client
       dockerfile: Dockerfile
     image: ds-gr15/client
     container_name: client_container

@@ -9,7 +9,7 @@ To deploy these containers, two commands must be executed:
 
 1. Build the image (You only need once, as long as the image has been created locally)
 
-    For MacOS
+    For UNIX Based OS
 
     ```sh
     docker compose build
@@ -23,7 +23,7 @@ To deploy these containers, two commands must be executed:
 
 2. Deploy the Containers
 
-    For MacOS
+    For UNIX Based OS
 
     ```sh
     docker compose up -d
@@ -74,7 +74,7 @@ You could also try to request GET HTTP to the server using `http://localhost:808
 To shutdown the containers it could be easily done using a simple line of code below.
 The containers will also be deleted by default
 
-For MacOS
+For UNIX Based OS
 
 ```sh
 docker compose down
