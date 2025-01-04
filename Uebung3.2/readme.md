@@ -1,70 +1,37 @@
-# Introduction to Containerization with Docker
+# Übung 3.2
 
-In this exercise, we will build a Docker image with a web application, run it, and terminate it finally. This can be done in a local VM or in a Cloud.
+## Deployment
 
- 1. Have a look to the steps in the Dockerfile to see what happens during the build process.
- 2. Build an image with name `controller`:
+The configuration within `docker-compose.yml` allows the server to be accessed within a web browser.
+To deploy these containers, two commands must be executed:
 
-  ```sh
-    docker build . -t controller
-  ```
+1. Build the image and deploy the container
+
+    For UNIX Based OS
+
+    ```sh
+    docker compose up --build -d
+    ```
+
+    For Linux
+
+    ```sh
+    docker-compose up --build -d
+    ```
+
+2. You could check the containers are running, get the id and the port:
   
- 3. List the images available on your host and verify that there is a `controller` image:
+    ```sh
+    docker ps -a
+    ```
+
+## Interactive Mode
+
+To accesss the robot i.e. sending health status you could use this command below. After that write 'h' or 'help' to get information for access
 
 ```sh
-docker images
+docker attach <name of robot>
 ```
-
- 4. Launch a container from the image. We expose the port from the container to port 80 on the local machine:
-  
-  ```sh
-  docker run -p 80:8080 -d controller
-  ```
- 
- 5. Check that the container is running and get the id:
-  
-  ```sh
-  docker ps -a
-  ```
-
- 6. Now we check that the service we just created by opening `http://hostname` in a webbrowser.
- 7. Let's enter the container:
-
-```sh
-docker exec -it <container id> /bin/bash
-```
-
- or if it does not work, then
-
-```sh
-docker exec -it <container id> /bin/sh
-```
-
- 8. Stop the container:
-
-```sh
-docker stop <container id>
-```
-
- 9. Now have a look to the steps in Dockerfile-alpine and build a further image `controller-alpine` with Alpine Linux as base image:
-
-```sh
-docker build -f Dockerfile-alpine -t controller-alpine .
-```
-
- 10. Check that image is like the one with the python3 base image by starting a container and browsing to the index page.
- 11. Compare the sizes of both images. Can you give a reason? (Hint: you need the history of the images...)
- 12. Remove the containers:
-  
-  ```sh
-  docker rm <container id>
-  ```
-
- 13. Remove the images from your host:
-  
-  ```sh
-  docker rmi controller
-  ```
 
 ## gRPC
 
