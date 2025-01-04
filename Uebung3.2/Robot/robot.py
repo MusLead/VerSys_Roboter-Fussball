@@ -1,12 +1,11 @@
-#TODO: add myStatus gRPC function and also help message to know what command should be given. 
-#TODO: this id should be automatically aded from the args later on, because it will be created from the docker
-#TODO: Learn what context manager is and how it works.
 import argparse
 from contextlib import contextmanager
 import os
 import signal
 import sys
+import threading
 import grpc
+import time
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../Controller')))
 
@@ -35,7 +34,7 @@ def elect_captain(stub):
     response = stub.ElectCaptain(captain_request)
     print(f"🏅 New captain elected: {response.new_captain}")
 
-INVALID_INPUT_MESSAGE = "Invalid input. Please enter '1' or '2'."
+INVALID_INPUT_MESSAGE = "Invalid input. Please write 'help' for further information."
 
 @contextmanager
 def grpc_channel_context(target):
@@ -45,6 +44,15 @@ def grpc_channel_context(target):
     finally:
         channel.close()
 
+def print_help():
+    print("\n🤖 Robot Control Help Menu 🤖")
+    print("=" * 30)
+    print("Commands:")
+    print("  1  → Send health status")
+    print("  2  → Start captain election")
+    print("  3  → Quit program")
+    print("\n📢 To detach from Docker: Press 'Ctrl + P', then 'Ctrl + Q'\n")
+
 def main(robot_id):
     with grpc_channel_context(f'{targetServer}:50051') as channel:
         stub = robot_controller_pb2_grpc.RobotControllerStub(channel)
@@ -52,34 +60,49 @@ def main(robot_id):
 
         def signal_handler(sig, frame):
             print("\n")
-            print(f'⚠️ {robot_id} is shutting down...')
+            print(f'WARNING: {robot_id} is shutting down...')
             unregister_with_controller(stub, robot_id)
             sys.exit(0)
 
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)
-    
-        print("Enter '1' to send health status, '2' to start captain election, or '3' to shutdown.")
+
+        print("\n🔄 Waiting for user input... Attach to Docker to begin.")
+        is_entered = False
         while True:
             try:
-                user_input = int(input(f"🤖 {robot_id} > ").strip())
+                user_input = input(f"🤖 {robot_id} > ").strip()
+                if user_input == "help" or user_input == "h":
+                    print_help()
+                    continue
+                if user_input == "" and is_entered:
+                    print()
+                    continue
+                user_input_int = int(user_input)
             except ValueError:
-                print(INVALID_INPUT_MESSAGE)
+                if not is_entered:
+                    print_help()
+                    is_entered = True
+                else:
+                    print(f"Input: {INVALID_INPUT_MESSAGE}")
                 continue
+            except EOFError:
+                print("\n⚠️ User detached. Waiting for reattachment...\n")
+                time.sleep(1)
+                continue  # Keeps waiting for a new attachment
 
-            match user_input:
-                case 1:
-                    status = input("Enter the health status: ").strip()
-                    send_status_update(stub, robot_id, status)
-                case 2:
-                    elect_captain(stub)
-                case 3:
-                    break
-                case _:
-                    print(INVALID_INPUT_MESSAGE)
+            if user_input_int == 1:
+                status = input("Enter the health status: ").strip()
+                send_status_update(stub, robot_id, status)
+            elif user_input_int == 2:
+                elect_captain(stub)
+            elif user_input_int == 3:
+                break
+            else:
+                print(f"Int: {INVALID_INPUT_MESSAGE}")
 
         unregister_with_controller(stub, robot_id)
-        print('Gracefully ending the process...')
+        print('Robot Gracefully ending the process...')
 
 
 if __name__ == "__main__":
@@ -87,4 +110,3 @@ if __name__ == "__main__":
     parser.add_argument("robot_id", help="Unique Robot Name")
     args = parser.parse_args()
     main(args.robot_id)
-

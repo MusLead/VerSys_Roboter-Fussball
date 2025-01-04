@@ -131,7 +131,7 @@ def handle_post_request(headers, request):
 
 def signal_handler(sig, frame):
     """Gracefully shutdown the HTTP server."""
-    print('⚠️ Gracefully shutting down servers...')
+    print('\nServer Gracefully shutting down servers...')
     sys.exit(0)
 
 if __name__ == "__main__":

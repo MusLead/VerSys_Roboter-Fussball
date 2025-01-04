@@ -5,7 +5,7 @@ FROM eclipse-temurin:21
 WORKDIR /code
 
 # Copy application source code to the container
-COPY ClientGradle .
+COPY Client/ClientGradle .
 
 # # Compile the Java application with preview features enabled
 RUN ./gradlew build
