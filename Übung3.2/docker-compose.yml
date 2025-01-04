@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   server:
     build:
@@ -6,11 +8,56 @@ services:
     image: ds-gr15/server
     container_name: server_container
     ports:
-      - "8080:8080"  # Exposes server's port 8080 to the host
+      - "8080:8080"  # Exposes HTTP server port
+      - "50051:50051"  # Exposes gRPC server port
     restart: always  # Ensures the container restarts automatically if it stops
     networks:
       static_network:
         ipv4_address: 192.168.1.100  # Assigns a static IP to the server
+    environment:
+      - TARGET_SERVER=192.168.1.100  # This tells the clients where to connect
+
+  robot1:
+    build:
+      context: ./Robot
+      dockerfile: Dockerfile
+    image: ds-gr15/client
+    container_name: robot1
+    depends_on:
+      - server
+    networks:
+      - static_network
+    environment:
+      - TARGET_SERVER=192.168.1.100
+    command: ["robot1"]  # Dynamically assigns name from docker-compose
+
+  robot2:
+    build:
+      context: ../Robot
+      dockerfile: Dockerfile
+    image: ds-gr15/client
+    container_name: robot2
+    depends_on:
+      - server
+    networks:
+      - static_network
+    environment:
+      - TARGET_SERVER=192.168.1.100
+    command: ["robot2"]
+
+  robot3:
+    build:
+      context: ../Robot
+      dockerfile: Dockerfile
+    image: ds-gr15/client
+    container_name: robot3
+    depends_on:
+      - server
+    networks:
+      - static_network
+    environment:
+      - TARGET_SERVER=192.168.1.100
+    command: ["robot3"]
 
   client:
     build:

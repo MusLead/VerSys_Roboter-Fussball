@@ -66,6 +66,14 @@ docker build -f Dockerfile-alpine -t controller-alpine .
   docker rmi controller
   ```
 
+## gRPC
+
+- Create proto API files:
+
+```sh
+python -m grpc_tools.protoc --proto_path=./controller --python_out=./Controller --grpc_python_out=./Controller robot_controller.proto
+```
+
 References:
 
 - <https://www.kirilv.com/canvas-confetti/>

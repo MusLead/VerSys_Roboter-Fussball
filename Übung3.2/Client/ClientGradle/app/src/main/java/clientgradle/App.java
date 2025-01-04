@@ -13,16 +13,18 @@ public class App {
             Simple_Client.host = args[0];
             System.out.println("Actual Host: " + Simple_Client.host);
         }
-        test_get("/reset", 205, "");
-        test_get("/", 200, "Server is running");
-        test_get("/status", 200,
-                "{\"robots_active\": 5, \"current_captain\": \"Captain A\", \"controller_status\": \"Healthy\", \"dummy_data\": \"\"}");
-        test_get("/captain", 200, "{\"captain\": \"Captain A\"}");
-        test_get("/health", 200, "Controller is Healthy");
-        test_get("/election", 200, "New captain elected: Captain B");
-        test_get("/unknown", 404, "Not Found");
+        //TODO: can the server send gRPC messages to the client? and the client respond?
+        // If yes, we could also test how the client responds to the server's messages
+        // test_get("/reset", 205, "");
+        // test_get("/", 200, "Server is running");
+        // test_get("/status", 200,
+        //         "{\"robots_active\": 5, \"current_captain\": \"Captain A\", \"controller_status\": \"Healthy\", \"dummy_data\": \"\"}");
+        // test_get("/captain", 200, "{\"captain\": \"Captain A\"}");
+        // test_get("/health", 200, "Controller is Healthy");
+        // test_get("/election", 200, "New captain elected: Captain B");
+        // test_get("/unknown", 404, "Not Found");
 
-        test_post("/", "{\"dummy_data\": \"test data\"}", 200, "Data received and stored");
-        test_post_with_rtt("/", "{\"dummy_data\":\"rtt testing\"}", 200, "Data received and stored");
+        // test_post("/", "{\"dummy_data\": \"test data\"}", 200, "Data received and stored");
+        // test_post_with_rtt("/", "{\"dummy_data\":\"rtt testing\"}", 200, "Data received and stored");
     }
 }

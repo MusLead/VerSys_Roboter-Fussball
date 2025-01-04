@@ -6,21 +6,18 @@ RUN apk add --update-cache \
     py3-pip \
   && rm -rf /var/cache/apk/*
 
-# Set the working directory
-WORKDIR /code
-
 # Copy the Controller directory (for gRPC definitions)
 COPY Controller /code/Controller
 
-# Copy the Server directory
-COPY Server /code/Server
+# Copy the Robot directory
+COPY Robot /code/Robot
 
 # Install dependencies
 RUN pip install grpcio grpcio-tools
 
-# Set the default working directory for the server
-WORKDIR /code/Server
+# Set the default working directory for the robot
+WORKDIR /app/Robot
 
 # add -u flag to avoid buffering (print output immediately in the docker console)
 # run the application
-CMD ["python3","-u", "server.py"]
+ENTRYPOINT ["python3","-u", "robot.py"]

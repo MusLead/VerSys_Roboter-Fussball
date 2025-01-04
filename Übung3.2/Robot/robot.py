@@ -13,6 +13,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../Cont
 import robot_controller_pb2
 import robot_controller_pb2_grpc
 
+targetServer = os.getenv("TARGET_SERVER", "localhost")
+
 def register_with_controller(stub, robot_id):
     robot_info = robot_controller_pb2.RobotInfo(id=robot_id)
     response = stub.RegisterRobot(robot_info)
@@ -44,11 +46,12 @@ def grpc_channel_context(target):
         channel.close()
 
 def main(robot_id):
-    with grpc_channel_context('controller:50051') as channel:
+    with grpc_channel_context(f'{targetServer}:50051') as channel:
         stub = robot_controller_pb2_grpc.RobotControllerStub(channel)
         register_with_controller(stub, robot_id)
 
         def signal_handler(sig, frame):
+            print("\n")
             print(f'⚠️ {robot_id} is shutting down...')
             unregister_with_controller(stub, robot_id)
             sys.exit(0)
