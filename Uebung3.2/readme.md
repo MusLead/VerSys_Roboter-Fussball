@@ -19,7 +19,21 @@ To deploy these containers, two commands must be executed:
     docker-compose up --build -d
     ```
 
-2. You could check the containers are running, get the id and the port:
+2. You can also scale the robot with the command below i.e 5 robot containers
+
+    For UNIX Based OS
+
+    ```sh
+    docker compose up --scale robot=5 --build -d
+    ```
+
+    For Linux
+
+    ```sh
+    docker-compose up --scale robot=5 --build -d
+    ```
+
+3. You could check the containers are running, get the id and the port:
   
     ```sh
     docker ps -a

@@ -13,12 +13,11 @@ services:
       static_network:
         ipv4_address: 192.168.1.100  # Assigns a static IP to the server
 
-  robot1:
+  robot:
     build:
       context: .
       dockerfile: Robot/Dockerfile
     image: ds-gr15/robot
-    container_name: robot1
     depends_on:
       - server
     networks:
@@ -27,33 +26,7 @@ services:
       - TARGET_SERVER=192.168.1.100
     stdin_open: true  # Keeps stdin open (prevents EOFError)
     tty: true  # Allocates a terminal for interactive input
-    command: ["python3","-u", "robot.py", "robot1"]  # Dynamically assigns name from docker-compose
-
-  robot2:
-    image: ds-gr15/robot
-    container_name: robot2
-    depends_on:
-      - server
-    networks:
-      - static_network
-    environment:
-      - TARGET_SERVER=192.168.1.100
-    stdin_open: true  # Keeps stdin open (prevents EOFError)
-    tty: true  # Allocates a terminal for interactive input
-    command: ["python3","-u", "robot.py", "robot2"]
-
-  robot3:
-    image: ds-gr15/robot
-    container_name: robot3
-    depends_on:
-      - server
-    networks:
-      - static_network
-    environment:
-      - TARGET_SERVER=192.168.1.100
-    stdin_open: true  # Keeps stdin open (prevents EOFError)
-    tty: true  # Allocates a terminal for interactive input
-    command: ["python3","-u", "robot.py", "robot3"]
+    command: ["/bin/sh", "-c", "exec python3 robot.py robot_$(hostname)"]
 
   client:
     build:
