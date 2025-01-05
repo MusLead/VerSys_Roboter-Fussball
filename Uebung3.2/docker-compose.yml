@@ -3,27 +3,27 @@ services:
     build:
       context: .
       dockerfile: Server/Dockerfile
-    image: ds-gr15/server
-    container_name: server_container
+    image: ds-gr15/server${AUFGABE_NR}
+    container_name: uebung${AUFGABE_NR}-server
     ports:
-      - "8080:8080"  # Exposes HTTP server port
-      - "50051:50051"  # Exposes gRPC server port
+      - "${HOST_HTTP_PORT}:8080"  # Exposes HTTP server port
+      - "${HOST_GRPC_PORT}:50051"  # Exposes gRPC server port
     restart: always  # Ensures the container restarts automatically if it stops
     networks:
       static_network:
-        ipv4_address: 192.168.1.100  # Assigns a static IP to the server
+        ipv4_address: ${IP_PREFIX}.100  # Assigns a static IP to the server
 
   robot:
     build:
       context: .
       dockerfile: Robot/Dockerfile
-    image: ds-gr15/robot
+    image: ds-gr15/robot${AUFGABE_NR}
     depends_on:
       - server
     networks:
       - static_network
     environment:
-      - TARGET_SERVER=192.168.1.100
+      - TARGET_SERVER=${IP_PREFIX}.100
     stdin_open: true  # Keeps stdin open (prevents EOFError)
     tty: true  # Allocates a terminal for interactive input
     command: ["/bin/sh", "-c", "exec python3 robot.py robot_$(hostname)"]
@@ -32,8 +32,10 @@ services:
     build:
       context: .
       dockerfile: Client/Dockerfile
-    image: ds-gr15/client
-    container_name: client_container
+    image: ds-gr15/client${AUFGABE_NR}
+    container_name: uebung${AUFGABE_NR}-client
+    environment:
+      - TARGET_SERVER=${IP_PREFIX}.100
     depends_on:
       - server
     networks:
@@ -44,4 +46,4 @@ networks:
     driver: bridge
     ipam:
       config:
-        - subnet: 192.168.1.0/24  # Defines the subnet for the network
+        - subnet: ${IP_PREFIX}.0/24  # Defines the subnet for the network

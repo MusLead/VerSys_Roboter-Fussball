@@ -9,7 +9,8 @@ import java.util.List;
  * This client tests the server's response status and body content.
  */
 public class Simple_Client {
-    protected static String host = "localhost";
+    
+    protected static String host = System.getenv("TARGET_SERVER") != null ? System.getenv("TARGET_SERVER") : "localhost";
     private static final int PORT = 8080;
 
     /**

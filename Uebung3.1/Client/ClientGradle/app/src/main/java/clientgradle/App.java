@@ -11,8 +11,9 @@ public class App {
         // to allow changing the host, if the server is not running on localhost
         if(args.length == 1){ 
             Simple_Client.host = args[0];
-            System.out.println("Actual Host: " + Simple_Client.host);
+            System.out.println("Host changed to: " + Simple_Client.host);
         }
+        System.out.println("Actual Host: " + Simple_Client.host);
         test_get("/reset", 205, "");
         test_get("/", 200, "Server is running");
         test_get("/status", 200,

@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class TCP_ClientTest {
 
-    private static final int TEST_PORT = 8081; // Test server port
+    private static final int TEST_PORT = 8100; // Test server port
     private static ServerSocket testServerSocket;
     private static Thread serverThread;
 
@@ -30,10 +30,12 @@ class TCP_ClientTest {
                     }
 
                     // Create a mock HTTP response
-                    String response = "HTTP/1.1 200 OK\r\n" +
-                            "Content-Length: 11\r\n" +
-                            "\r\n" +
-                            "Hello World";
+                    String response = """
+                            HTTP/1.1 200 OK\r
+                            Content-Length: 11\r
+                            
+                            Hello World
+                            """;
 
                     // Send the mock response
                     out.print(response);

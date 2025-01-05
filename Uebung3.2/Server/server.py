@@ -119,8 +119,9 @@ def handle_get_request(path):
             return "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\ngRPC Server is UP"
         else:
             return "HTTP/1.1 503 Service Unavailable\r\nContent-Type: text/plain\r\n\r\ngRPC Server is DOWN"
+    # Return a 404 Not Found response for unsupported paths
     else:
-        return "HTTP/1.1 404 Not Found\r\n\r\n"
+        return "HTTP/1.1 404 Bad Request\r\nContent-Type: text/plain\r\n\r\nNot Found"
 
 def handle_post_request(headers, request):
     """Handle incoming POST requests."""

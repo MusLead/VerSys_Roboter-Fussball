@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class TCP_ClientTest {
 
-    private static final int TEST_PORT = 8081; // Test server port
+    private static final int TEST_PORT = 8100; // Test server port
     private static ServerSocket testServerSocket;
     private static Thread serverThread;
 

@@ -3,21 +3,23 @@ services:
     build:
       context: ./Server
       dockerfile: Dockerfile
-    image: ds-gr15/server
-    container_name: server_container
+    image: ds-gr15/server${AUFGABE_NR}
+    container_name: uebung${AUFGABE_NR}-server
     ports:
-      - "8080:8080"  # Exposes server's port 8080 to the host
+      - "${HOST_HTTP_PORT}:8080"  # Exposes server's port 8080 to the host
     restart: always  # Ensures the container restarts automatically if it stops
     networks:
       static_network:
-        ipv4_address: 192.168.1.100  # Assigns a static IP to the server
+        ipv4_address: ${IP_PREFIX}.100  # Assigns a static IP to the server
 
   client:
     build:
       context: ./Client
       dockerfile: Dockerfile
-    image: ds-gr15/client
-    container_name: client_container
+    image: ds-gr15/client${AUFGABE_NR}
+    container_name: uebung${AUFGABE_NR}-client
+    environment:
+      - TARGET_SERVER=${IP_PREFIX}.100
     depends_on:
       - server
     networks:
@@ -28,4 +30,4 @@ networks:
     driver: bridge
     ipam:
       config:
-        - subnet: 192.168.1.0/24  # Defines the subnet for the network
+        - subnet: ${IP_PREFIX}.0/24  # Defines the subnet for the network
