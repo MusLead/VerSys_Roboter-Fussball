@@ -25,7 +25,7 @@ class MyListener(stomp.ConnectionListener):
     
     def on_message(self, frame):
         if not self.stop_event.is_set():
-            print(f'\n🤖 from server to {self.robot_id}: {frame.body}\n🤖 {self.robot_id} >', end=' ')
+            print(f'\n📩 from server to {self.robot_id}: {frame.body}\n🤖 {self.robot_id} >', end=' ')
             sys.stdout.flush()  # Ensure message prints immediately
 
 def start_message_listener(robot_id, stop_event):

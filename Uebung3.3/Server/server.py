@@ -9,6 +9,8 @@ import stomp
 from concurrent import futures
 from time import sleep
 
+#TODO:When the server is down, the robot should be shutdown immdiately
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../Controller')))
 
 import robot_controller_pb2
@@ -145,10 +147,10 @@ def signal_handler(sig, frame):
     print('\nServer Gracefully shutting down servers...')
     sys.exit(0)
 
-def election_command():
+def election_command(additional_info=""):
     conn = stomp.Connection([('localhost', 61613)])
     conn.connect('username', 'password', wait=True)
-    conn.send(body='Command for robot', destination='/queue/robot_commands')
+    conn.send(body='Command for robot' + additional_info, destination='/queue/robot_commands')
     conn.disconnect()
 
 if __name__ == "__main__":
