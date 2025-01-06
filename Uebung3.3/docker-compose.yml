@@ -5,7 +5,10 @@ services:
       dockerfile: Server/Dockerfile
     image: ds-gr15/server${AUFGABE_NR}
     container_name: uebung${AUFGABE_NR}-server
+    environment:
+      - TARGET_SERVER=${IP_PREFIX}.100
     ports:
+      - 8161:8161  # Exposes ActiveMQ web console port
       - "${HOST_HTTP_PORT}:8080"  # Exposes HTTP server port
       - "${HOST_GRPC_PORT}:50051"  # Exposes gRPC server port
     restart: always  # Ensures the container restarts automatically if it stops
@@ -26,7 +29,7 @@ services:
       - TARGET_SERVER=${IP_PREFIX}.100
     stdin_open: true  # Keeps stdin open (prevents EOFError)
     tty: true  # Allocates a terminal for interactive input
-    command: ["/bin/sh", "-c", "activemq start && exec python3 robot.py robot_$(hostname)"]
+    command: ["/bin/sh", "-c", "exec python3 robot.py robot_$(hostname)"]
 
   client:
     build:

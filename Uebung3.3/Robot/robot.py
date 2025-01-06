@@ -29,7 +29,7 @@ class MyListener(stomp.ConnectionListener):
             sys.stdout.flush()  # Ensure message prints immediately
 
 def start_message_listener(robot_id, stop_event):
-    conn = stomp.Connection([('localhost', 61613)])
+    conn = stomp.Connection([(targetServer, 61613)])
     listener = MyListener(robot_id, stop_event)
     conn.set_listener('', listener)
     conn.connect('username', 'password', wait=True)
@@ -85,19 +85,17 @@ def print_help():
     sys.stdout.flush()
 
 def main(robot_id):
-    def signal_handler(sig, frame):
-            print("\n")
-            print(f'WARNING: {robot_id} is shutting down...')
-            unregister_with_controller(stub, robot_id)
-            sys.exit(0)
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
 
     with grpc_channel_context(f'{targetServer}:50051') as channel:
         stub = robot_controller_pb2_grpc.RobotControllerStub(channel)
-        register_with_controller(stub, robot_id)
 
-        
+        def signal_handler(sig, frame):
+                print("\n")
+                print(f'WARNING: {robot_id} is shutting down...')
+                unregister_with_controller(stub, robot_id)
+                sys.exit(0)
+        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGTERM, signal_handler)
         
         stop_event = threading.Event()
 
@@ -114,6 +112,7 @@ def main(robot_id):
         input_thread.join()
 
 def handle_user_input(robot_id, stub,stop_event):
+    register_with_controller(stub, robot_id)
     is_entered = False
     while True:
         try:

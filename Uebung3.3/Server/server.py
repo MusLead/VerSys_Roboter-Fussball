@@ -1,4 +1,5 @@
 import os
+import re
 import socket
 import json
 import signal
@@ -15,6 +16,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../Cont
 
 import robot_controller_pb2
 import robot_controller_pb2_grpc
+import traceback
 
 data_store = {
     "robots": {},
@@ -25,6 +27,19 @@ data_store = {
 
 grpc_server_ready = threading.Event()
 
+targetBroker = os.getenv("TARGET_SERVER", "localhost")
+
+connection = stomp.Connection([(targetBroker, 61613)])
+
+def extract_ip(peer_address):
+        """Extracts a clean IP (IPv4 or IPv6) from gRPC context.peer()."""
+        if 'ipv6:%5B::1%5D' in peer_address: 
+            return '::1'  # IPv6 localhost
+        match = re.search(r'ipv[46]:\[(.*?)\]|\bipv[46]:(\S+):', peer_address)
+        if match:
+            return match.group(1) if match.group(1) else match.group(2)  # Extract the matched IP part
+        return "Unknown"
+
 class RobotControllerServicer(robot_controller_pb2_grpc.RobotControllerServicer):
     def __init__(self, shared_data_store):
         self.data_store = shared_data_store
@@ -33,6 +48,9 @@ class RobotControllerServicer(robot_controller_pb2_grpc.RobotControllerServicer)
         client_ip = context.peer()  # Get the client IP
         self.data_store["robots"][request.id] = {"ip": client_ip, "status": "Unknown"}
         print(f"Robot {request.id} with {client_ip} registered")
+        # robot_ip = extract_ip(client_ip)
+        # connectionsList.append(robotMessageQueue)
+
         # print(self.data_store)
         return robot_controller_pb2.RegistrationResponse(message="Robot registered")
 
@@ -43,7 +61,7 @@ class RobotControllerServicer(robot_controller_pb2_grpc.RobotControllerServicer)
             
             additional_info = ""  # Ensure the variable is always defined
             if request.status == "Error" or request.status == "error":
-                additional_info = f", {request.id} is unavailable. Election will be started!"
+                additional_info = f" {request.id} is unavailable. Election will be started!"
                 election_command(additional_info=additional_info)
 
             info = "Status updated" + additional_info  # Simplified concatenation
@@ -63,8 +81,27 @@ class RobotControllerServicer(robot_controller_pb2_grpc.RobotControllerServicer)
             del self.data_store["robots"][request.id]
             client_ip = context.peer()  # Get the client IP
             print(f"Robot {request.id} with {client_ip} unregistered")
+
+            # remove_conn = None
+            # for conn in connectionsList:
+            #     try:
+            #         if conn.transport is not None and conn.transport.current_host_and_port is not None:
+            #             client_ip, _ = conn.transport.current_host_and_port
+            #             if client_ip:
+            #                 print(f"Disconnecting {client_ip}")
+            #                 conn.disconnect()
+            #                 remove_conn = conn
+            #     except Exception as e:
+            #         print(f"⚠️ Error checking connection for {client_ip}: {e}")
+            #         traceback.print_exc()
+
+            # if remove_conn:
+            #     connectionsList.remove(remove_conn)
+            #     print(f"✅ ActiveMQ Connection removed for {client_ip}")
+            # else: 
+            #     print(f"⚠️ Could not find the connection with {client_ip}")
             
-            election_command(additional_info=f", robot {request.id} unregistered, election will be started!")
+            election_command(additional_info=f" robot {request.id} unregistered, election will be started!")
             additional_info = ", election will be started!"
             
             return robot_controller_pb2.RegistrationResponse(message="Robot unregistered" + additional_info)
@@ -123,7 +160,7 @@ def handle_get_request(path):
     if path == "/":
         return "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nServer is running"
     elif path == "/election": 
-        election_command(additional_info=", User watns election. Election started!")
+        election_command(additional_info=" User watns election. Election started!")
         return "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nElection command sent to the robots!"
     elif path == "/status":
         return f"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n{json.dumps(data_store)}"
@@ -149,19 +186,19 @@ def handle_post_request(headers, request):
 
 def signal_handler(sig, frame):
     """Gracefully shutdown the HTTP server."""
+    connection.disconnect()
     print('\nServer Gracefully shutting down servers...')
     sys.exit(0)
 
 def election_command(additional_info=""):
-    conn = stomp.Connection([('localhost', 61613)])
-    conn.connect('username', 'password', wait=True)
-    conn.send(body='Command for robot' + additional_info, destination='/queue/robot_commands')
-    conn.disconnect()
+    connection.send(body='Command for robot!' + additional_info, destination='/queue/robot_commands')
 
 if __name__ == "__main__":
     # ✅ Register signal handler in the MAIN THREAD
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
+
+    connection.connect('username', 'password', wait=True)
 
     grpc_thread = threading.Thread(target=serve, daemon=True)
     grpc_thread.start()

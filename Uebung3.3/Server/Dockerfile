@@ -40,7 +40,7 @@ RUN wget https://dlcdn.apache.org/activemq/${ACTIVEMQ_VERSION}/apache-activemq-$
     ln -s ${ACTIVEMQ_HOME}/bin/activemq /usr/local/bin/activemq
 
 # Expose ActiveMQ default ports
-EXPOSE 61616 8161
+EXPOSE 61613 8161
 
 # Set the working directory inside the container
 WORKDIR /code
