@@ -39,11 +39,16 @@ class RobotControllerServicer(robot_controller_pb2_grpc.RobotControllerServicer)
     def SendStatus(self, request, context):
         if request.id in self.data_store["robots"]:
             self.data_store["robots"][request.id]["status"] = request.status
-            print(f"Status updated for robot {request.id} is {request.status}")
-            if request.status == "Error":
-                election_command()
-                additional_info = ", election will be started!"
-            return robot_controller_pb2.StatusResponse(message="Status updated" + additional_info)
+            print(f"Status updated for: {request.id} is {request.status}")
+            
+            additional_info = ""  # Ensure the variable is always defined
+            if request.status == "Error" or request.status == "error":
+                additional_info = f", {request.id} is unavailable. Election will be started!"
+                election_command(additional_info=additional_info)
+
+            info = "Status updated" + additional_info  # Simplified concatenation
+            
+            return robot_controller_pb2.StatusResponse(message=info)
         else:
             return robot_controller_pb2.StatusResponse(message="Robot not registered")
 
@@ -59,7 +64,7 @@ class RobotControllerServicer(robot_controller_pb2_grpc.RobotControllerServicer)
             client_ip = context.peer()  # Get the client IP
             print(f"Robot {request.id} with {client_ip} unregistered")
             
-            election_command()
+            election_command(additional_info=f", robot {request.id} unregistered, election will be started!")
             additional_info = ", election will be started!"
             
             return robot_controller_pb2.RegistrationResponse(message="Robot unregistered" + additional_info)
@@ -118,7 +123,7 @@ def handle_get_request(path):
     if path == "/":
         return "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nServer is running"
     elif path == "/election": 
-        election_command()
+        election_command(additional_info=", User watns election. Election started!")
         return "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nElection command sent to the robots!"
     elif path == "/status":
         return f"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n{json.dumps(data_store)}"

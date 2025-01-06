@@ -25,7 +25,7 @@ class MyListener(stomp.ConnectionListener):
     
     def on_message(self, frame):
         if not self.stop_event.is_set():
-            print(f'\n📩 from server to {self.robot_id}: {frame.body}\n🤖 {self.robot_id} >', end=' ')
+            print(f'\n📡 from server to {self.robot_id}: {frame.body}\n🤖 {self.robot_id} >', end=' ')
             sys.stdout.flush()  # Ensure message prints immediately
 
 def start_message_listener(robot_id, stop_event):
@@ -43,19 +43,19 @@ def start_message_listener(robot_id, stop_event):
 def register_with_controller(stub, robot_id):
     robot_info = robot_controller_pb2.RobotInfo(id=robot_id)
     response = stub.RegisterRobot(robot_info)
-    print(f"🤖 {robot_id}: {response.message}")
+    print(f"📩 Server response to {robot_id}: {response.message}")
     sys.stdout.flush()
 
 def send_status_update(stub, robot_id, status):
     robot_status = robot_controller_pb2.RobotStatus(id=robot_id, status=status)
     response = stub.SendStatus(robot_status)
-    print(f"🤖 {robot_id}: {response.message}")
+    print(f"📩 Server response to {robot_id}: {response.message}")
     sys.stdout.flush()
 
 def unregister_with_controller(stub, robot_id):
     robot_info = robot_controller_pb2.RobotInfo(id=robot_id)
     response = stub.UnregisterRobot(robot_info)
-    print(f"🤖 {robot_id}: {response.message}")
+    print(f"📩 Server response to {robot_id}: {response.message}")
     sys.stdout.flush()
 
 def elect_captain(stub):
