@@ -10,6 +10,9 @@ RUN apt-get update && \
         python3 \
         python3-pip \
         curl \
+        openjdk-17-jdk \
+        wget \
+        unzip \
         && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
@@ -21,10 +24,23 @@ RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3
 RUN python3 -m pip install --upgrade pip
 
 # Install the grpcio library
-RUN python3 -m pip install grpcio grpcio-tools protobuf
+RUN python3 -m pip install grpcio grpcio-tools protobuf stomp.py
 
 # Verify installations
 RUN python3 --version && pip --version && python3 -m pip show grpcio
+
+# Install ActiveMQ 6.1.4
+ENV ACTIVEMQ_VERSION=6.1.4
+ENV ACTIVEMQ_HOME=/opt/activemq
+
+RUN wget https://dlcdn.apache.org/activemq/${ACTIVEMQ_VERSION}/apache-activemq-${ACTIVEMQ_VERSION}-bin.tar.gz -O /tmp/activemq.tar.gz && \
+    tar -xzf /tmp/activemq.tar.gz -C /opt/ && \
+    mv /opt/apache-activemq-${ACTIVEMQ_VERSION} ${ACTIVEMQ_HOME} && \
+    rm /tmp/activemq.tar.gz && \
+    ln -s ${ACTIVEMQ_HOME}/bin/activemq /usr/local/bin/activemq
+
+# Expose ActiveMQ default ports
+EXPOSE 61616 8161
 
 # Set the working directory inside the container
 WORKDIR /code
@@ -39,5 +55,4 @@ COPY Server /code/Server
 WORKDIR /code/Server
 
 # Use the virtual environment when running the application
-CMD ["python3", "-u", "server.py"]
-
+CMD ["/bin/sh", "-c", "activemq start && exec python3 -u server.py"]

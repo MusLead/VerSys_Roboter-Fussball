@@ -26,7 +26,7 @@ services:
       - TARGET_SERVER=${IP_PREFIX}.100
     stdin_open: true  # Keeps stdin open (prevents EOFError)
     tty: true  # Allocates a terminal for interactive input
-    command: ["/bin/sh", "-c", "exec python3 robot.py robot_$(hostname)"]
+    command: ["/bin/sh", "-c", "activemq start && exec python3 robot.py robot_$(hostname)"]
 
   client:
     build:

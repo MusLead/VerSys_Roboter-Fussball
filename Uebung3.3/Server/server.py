@@ -5,6 +5,7 @@ import signal
 import sys
 import grpc
 import threading
+import stomp
 from concurrent import futures
 from time import sleep
 
@@ -37,7 +38,10 @@ class RobotControllerServicer(robot_controller_pb2_grpc.RobotControllerServicer)
         if request.id in self.data_store["robots"]:
             self.data_store["robots"][request.id]["status"] = request.status
             print(f"Status updated for robot {request.id} is {request.status}")
-            return robot_controller_pb2.StatusResponse(message="Status updated")
+            if request.status == "Error":
+                election_command()
+                additional_info = ", election will be started!"
+            return robot_controller_pb2.StatusResponse(message="Status updated" + additional_info)
         else:
             return robot_controller_pb2.StatusResponse(message="Robot not registered")
 
@@ -52,8 +56,11 @@ class RobotControllerServicer(robot_controller_pb2_grpc.RobotControllerServicer)
             del self.data_store["robots"][request.id]
             client_ip = context.peer()  # Get the client IP
             print(f"Robot {request.id} with {client_ip} unregistered")
-            # print(self.data_store)
-            return robot_controller_pb2.RegistrationResponse(message="Robot unregistered")
+            
+            election_command()
+            additional_info = ", election will be started!"
+            
+            return robot_controller_pb2.RegistrationResponse(message="Robot unregistered" + additional_info)
         else:
             return robot_controller_pb2.RegistrationResponse(message="Robot not registered")
 
@@ -108,6 +115,9 @@ def handle_get_request(path):
     """Handle different GET routes."""
     if path == "/":
         return "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nServer is running"
+    elif path == "/election": 
+        election_command()
+        return "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nElection command sent to the robots!"
     elif path == "/status":
         return f"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n{json.dumps(data_store)}"
     elif path == "/captain":
@@ -134,6 +144,12 @@ def signal_handler(sig, frame):
     """Gracefully shutdown the HTTP server."""
     print('\nServer Gracefully shutting down servers...')
     sys.exit(0)
+
+def election_command():
+    conn = stomp.Connection([('localhost', 61613)])
+    conn.connect('username', 'password', wait=True)
+    conn.send(body='Command for robot', destination='/queue/robot_commands')
+    conn.disconnect()
 
 if __name__ == "__main__":
     # ✅ Register signal handler in the MAIN THREAD
