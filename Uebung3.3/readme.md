@@ -62,3 +62,10 @@ References:
 - <https://hub.docker.com>
 - <https://alpinelinux.org/>
 - <https://pkgs.alpinelinux.org/packages>
+- <[Slim docker images](https://piotrminkowski.com/2023/11/07/slim-docker-images-for-java/)>
+- <[Using Stomp](http://jasonrbriggs.github.io/stomp.py/api.html)>
+- <[Overwrites Text using sed](https://www.cyberciti.biz/faq/how-to-use-sed-to-find-and-replace-text-in-files-in-linux-unix-shell/)>
+- <[Download AvtiveMQ](https://activemq.apache.org/components/classic/download/)>
+- <[Understanding gRPC in python](https://www.youtube.com/watch?v=WB37L7PjI5k)>
+  - <[Source code](https://github.com/chelseafarley/PythonGrpc/tree/main)>
+- <[Reuse images for --scale](https://community.okteto.com/t/how-do-i-reuse-the-same-image-across-multiple-services/1195)>

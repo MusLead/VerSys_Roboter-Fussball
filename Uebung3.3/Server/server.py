@@ -10,8 +10,6 @@ import stomp
 from concurrent import futures
 from time import sleep
 
-#TODO:When the server is down, the robot should be shutdown immdiately
-
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../Controller')))
 
 import robot_controller_pb2
@@ -48,10 +46,6 @@ class RobotControllerServicer(robot_controller_pb2_grpc.RobotControllerServicer)
         client_ip = context.peer()  # Get the client IP
         self.data_store["robots"][request.id] = {"ip": client_ip, "status": "Unknown"}
         print(f"Robot {request.id} with {client_ip} registered")
-        # robot_ip = extract_ip(client_ip)
-        # connectionsList.append(robotMessageQueue)
-
-        # print(self.data_store)
         return robot_controller_pb2.RegistrationResponse(message="Robot registered")
 
     def SendStatus(self, request, context):
@@ -81,25 +75,6 @@ class RobotControllerServicer(robot_controller_pb2_grpc.RobotControllerServicer)
             del self.data_store["robots"][request.id]
             client_ip = context.peer()  # Get the client IP
             print(f"Robot {request.id} with {client_ip} unregistered")
-
-            # remove_conn = None
-            # for conn in connectionsList:
-            #     try:
-            #         if conn.transport is not None and conn.transport.current_host_and_port is not None:
-            #             client_ip, _ = conn.transport.current_host_and_port
-            #             if client_ip:
-            #                 print(f"Disconnecting {client_ip}")
-            #                 conn.disconnect()
-            #                 remove_conn = conn
-            #     except Exception as e:
-            #         print(f"⚠️ Error checking connection for {client_ip}: {e}")
-            #         traceback.print_exc()
-
-            # if remove_conn:
-            #     connectionsList.remove(remove_conn)
-            #     print(f"✅ ActiveMQ Connection removed for {client_ip}")
-            # else: 
-            #     print(f"⚠️ Could not find the connection with {client_ip}")
             
             election_command(additional_info=f" robot {request.id} unregistered, election will be started!")
             additional_info = ", election will be started!"
@@ -191,14 +166,18 @@ def signal_handler(sig, frame):
     sys.exit(0)
 
 def election_command(additional_info=""):
-    connection.send(body='Command for robot!' + additional_info, destination='/queue/robot_commands')
+    for _, _ in data_store["robots"].items():
+        connection.send(body='Attention all Robots!!' + additional_info, destination='/queue/robot_commands')
 
 if __name__ == "__main__":
     # ✅ Register signal handler in the MAIN THREAD
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
+    sleep(1)
+
     connection.connect('username', 'password', wait=True)
+    print("✅ STOMP connection established")
 
     grpc_thread = threading.Thread(target=serve, daemon=True)
     grpc_thread.start()

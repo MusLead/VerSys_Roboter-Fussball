@@ -111,45 +111,65 @@ def main(robot_id):
         listener_thread.join()
         input_thread.join()
 
-def handle_user_input(robot_id, stub,stop_event):
+def handle_user_input(robot_id, stub, stop_event):
     register_with_controller(stub, robot_id)
     is_entered = False
     while True:
-        try:
-            user_input = input(f"🤖 {robot_id} > ").strip()
-            if user_input == "help" or user_input == "h":
-                print_help()
-                continue
-            if user_input == "" and is_entered:
-                print()
-                continue
-            user_input_int = int(user_input)
-        except ValueError:
-            if not is_entered:
-                print_help()
-                is_entered = True
-            else:
-                print(f"Input: {INVALID_INPUT_MESSAGE}")
+        user_input = get_user_input(robot_id)
+        if handle_special_inputs(user_input, is_entered):
+            is_entered = True
             continue
-        except EOFError:
-            print("\n⚠️ User detached. Waiting for reattachment...\n")
-            sys.stdout.flush()
-            time.sleep(1)
-            continue  # Keeps waiting for a new attachment
-
-        if user_input_int == 1:
-            status = input("Enter the health status: ").strip()
-            send_status_update(stub, robot_id, status)
-        elif user_input_int == 2:
-            elect_captain(stub)
-        elif user_input_int == 3:
-            unregister_with_controller(stub, robot_id)
-            print(f"🤖 {robot_id} is shutting down...")
-            stop_event.set()
-            sys.stdout.flush()
+        user_input_int = convert_input_to_int(user_input, is_entered)
+        if user_input_int is None:
+            continue
+        if process_user_command(user_input_int, robot_id, stub, stop_event):
             break
+
+def get_user_input(robot_id):
+    try:
+        return input(f"🤖 {robot_id} > ").strip()
+    except EOFError:
+        print("\n⚠️ User detached. Waiting for reattachment...\n")
+        sys.stdout.flush()
+        time.sleep(1)
+        return None
+
+def handle_special_inputs(user_input, is_entered):
+    if user_input is None:
+        return True
+    if user_input == "help" or user_input == "h":
+        print_help()
+        return True
+    if user_input == "" and is_entered:
+        print()
+        return True
+    return False
+
+def convert_input_to_int(user_input, is_entered):
+    try:
+        return int(user_input)
+    except ValueError:
+        if not is_entered:
+            print_help()
         else:
-            print(f"Int: {INVALID_INPUT_MESSAGE}")
+            print(f"Input: {INVALID_INPUT_MESSAGE}")
+        return None
+
+def process_user_command(user_input_int, robot_id, stub, stop_event):
+    if user_input_int == 1:
+        status = input("Enter the health status: ").strip()
+        send_status_update(stub, robot_id, status)
+    elif user_input_int == 2:
+        elect_captain(stub)
+    elif user_input_int == 3:
+        unregister_with_controller(stub, robot_id)
+        print(f"🤖 {robot_id} is shutting down...")
+        stop_event.set()
+        sys.stdout.flush()
+        return True
+    else:
+        print(f"Int: {INVALID_INPUT_MESSAGE}")
+    return False
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run a Robot Client")

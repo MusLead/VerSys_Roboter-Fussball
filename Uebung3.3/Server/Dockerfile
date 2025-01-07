@@ -7,12 +7,12 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Update package list and install necessary packages
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        python3 \
-        python3-pip \
         curl \
         openjdk-17-jdk \
-        wget \
+        python3 \
+        python3-pip \
         unzip \
+        wget \
         && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
@@ -23,7 +23,7 @@ RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3
 # Upgrade pip to the latest version
 RUN python3 -m pip install --upgrade pip
 
-# Install the grpcio library
+# Install required Python libraries
 RUN python3 -m pip install grpcio grpcio-tools protobuf stomp.py
 
 # Verify installations
@@ -33,11 +33,18 @@ RUN python3 --version && pip --version && python3 -m pip show grpcio
 ENV ACTIVEMQ_VERSION=6.1.4
 ENV ACTIVEMQ_HOME=/opt/activemq
 
-RUN wget https://dlcdn.apache.org/activemq/${ACTIVEMQ_VERSION}/apache-activemq-${ACTIVEMQ_VERSION}-bin.tar.gz -O /tmp/activemq.tar.gz && \
-    tar -xzf /tmp/activemq.tar.gz -C /opt/ && \
+# Install ActiveMQ 6.1.4
+ENV ACTIVEMQ_VERSION=6.1.4
+ENV ACTIVEMQ_HOME=/opt/activemq
+
+ADD https://dlcdn.apache.org/activemq/${ACTIVEMQ_VERSION}/apache-activemq-${ACTIVEMQ_VERSION}-bin.tar.gz /tmp/activemq.tar.gz
+RUN tar -xzf /tmp/activemq.tar.gz -C /opt/ && \
     mv /opt/apache-activemq-${ACTIVEMQ_VERSION} ${ACTIVEMQ_HOME} && \
     rm /tmp/activemq.tar.gz && \
-    ln -s ${ACTIVEMQ_HOME}/bin/activemq /usr/local/bin/activemq
+    ln -s ${ACTIVEMQ_HOME}/bin/activemq /usr/local/bin/activemq && \
+    # Modify jetty.xml to set host to 0.0.0.0 for external access
+    # https://knowledge.informatica.com/s/article/000220326?language=en_US 
+    sed -i 's\127.0.0.1\0.0.0.0\g' ${ACTIVEMQ_HOME}/conf/jetty.xml
 
 # Expose ActiveMQ default ports
 EXPOSE 61613 8161
@@ -54,5 +61,5 @@ COPY Server /code/Server
 # Set the default working directory for the server
 WORKDIR /code/Server
 
-# Use the virtual environment when running the application
+# Start ActiveMQ and the Python server
 CMD ["/bin/sh", "-c", "activemq start && exec python3 -u server.py"]
