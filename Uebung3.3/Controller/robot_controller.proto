@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+service RobotController {
+  rpc RegisterRobot (RobotInfo) returns (RegistrationResponse);
+  rpc SendStatus (RobotStatus) returns (StatusResponse);
+  rpc ElectCaptain (CaptainRequest) returns (CaptainResponse);
+  rpc UnregisterRobot (RobotInfo) returns (RegistrationResponse);
+}
+
+message RobotInfo {
+  string id = 1;
+}
+
+message RegistrationResponse {
+  string message = 1;
+}
+
+message RobotStatus {
+  string id = 1;
+  string status = 2;
+}
+
+message StatusResponse {
+  string message = 1;
+}
+
+message CaptainRequest {}
+
+message CaptainResponse {
+  string new_captain = 1;
+}

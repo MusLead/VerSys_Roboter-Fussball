@@ -1,0 +1,59 @@
+services:
+  server:
+    build:
+      context: .
+      dockerfile: Server/Dockerfile
+    image: ds-gr15/server${AUFGABE_NR}
+    container_name: uebung${AUFGABE_NR}-server
+    environment:
+      - TARGET_SERVER=${IP_PREFIX}.100
+    ports:
+      - ${HOST_ACTIVEMQ_PORT}:8161  # Exposes ActiveMQ website
+      - "${HOST_HTTP_PORT}:8080"  # Exposes HTTP server port
+    restart: on-failure:5  # Restart on failure, max 5 times
+    networks:
+      static_network:
+        ipv4_address: ${IP_PREFIX}.100  # Assigns a static IP to the server
+    healthcheck:
+      test: ["CMD", "curl", "-I", "http://localhost:8161"]  # Check if ActiveMQ is available
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  robot:
+    build:
+      context: .
+      dockerfile: Robot/Dockerfile
+    image: ds-gr15/robot${AUFGABE_NR}
+    depends_on:
+      server:
+        condition: service_healthy  # Wait for the server to be healthy
+    networks:
+      - static_network
+    environment:
+      - TARGET_SERVER=${IP_PREFIX}.100
+    stdin_open: true  # Keeps stdin open (prevents EOFError)
+    tty: true  # Allocates a terminal for interactive input
+    command: ["/bin/sh", "-c", "exec python3 robot.py robot_$(hostname)"]
+
+  client:
+    build:
+      context: .
+      dockerfile: Client/Dockerfile
+    image: ds-gr15/client${AUFGABE_NR}
+    container_name: uebung${AUFGABE_NR}-client
+    environment:
+      - TARGET_SERVER=${IP_PREFIX}.100
+    depends_on:
+      server:
+        condition: service_healthy  # Wait for the server to be healthy
+    networks:
+      - static_network
+
+networks:
+  static_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${IP_PREFIX}.0/24  # Defines the subnet for the network
