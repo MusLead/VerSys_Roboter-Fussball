@@ -33,11 +33,12 @@ RUN python3 --version && pip --version && python3 -m pip show grpcio
 ENV ACTIVEMQ_VERSION=6.1.4
 ENV ACTIVEMQ_HOME=/opt/activemq
 
-# Install ActiveMQ 6.1.4
-ENV ACTIVEMQ_VERSION=6.1.4
+# Install ActiveMQ 6.1.5
+ENV ACTIVEMQ_VERSION=6.1.5
 ENV ACTIVEMQ_HOME=/opt/activemq
 
-ADD https://dlcdn.apache.org/activemq/${ACTIVEMQ_VERSION}/apache-activemq-${ACTIVEMQ_VERSION}-bin.tar.gz /tmp/activemq.tar.gz
+# Download and extract ActiveMQ
+ADD https://archive.apache.org/dist/activemq/${ACTIVEMQ_VERSION}/apache-activemq-${ACTIVEMQ_VERSION}-bin.tar.gz /tmp/activemq.tar.gz
 RUN tar -xzf /tmp/activemq.tar.gz -C /opt/ && \
     mv /opt/apache-activemq-${ACTIVEMQ_VERSION} ${ACTIVEMQ_HOME} && \
     rm /tmp/activemq.tar.gz && \
