@@ -20,12 +20,15 @@ TOPIC_ELECTION_ID = "leader_election_ID"  # Topic for leader election
 TOPIC_ELECTION_REQUEST = "election_request"  # Topic for election request from the server
 TOPIC_ONLINE = "online"  # Topic for online status
 TOPIC_NUM_ONLINE = "num_online"  # Topic for number of online robots
-TOPIC_HI = "HI"  # Topic for leader election
+TOPIC_ACK_LEADER = "ack_leader"  # Topic for acknowledging the leader
+TOPIC_HI = "Hi there"  # Topic for leader election
 clients_messages = {}  # For storing messages for leader election
 stub = None
 election_in_progress = False  # Flag to indicate if an election is in progress
 amILeader = False # Flag to indicate if I am the leader
 onlineLists = set()
+onAckLists = set()
+numRobots = 0
 
 INVALID_INPUT_MESSAGE = "Invalid input. Please write 'help' for further information."
 
@@ -36,6 +39,7 @@ def on_connect(client, userdata, flags, rc):
         print(f"🤖 {userdata} connected successfully to ActiveMQ MQTT broker.")
         client.subscribe(TOPIC_ELECTION_REQUEST)
         client.subscribe(TOPIC_ELECTION_ID)
+        client.subscribe(TOPIC_ACK_LEADER)
         client.subscribe(TOPIC_NUM_ONLINE)
         client.subscribe(TOPIC_ONLINE)
         client.subscribe(TOPIC_HI)
@@ -44,7 +48,7 @@ def on_connect(client, userdata, flags, rc):
 
 
 def on_message(client, userdata, msg):
-    global stub, clients_messages, election_in_progress, amILeader
+    global stub, clients_messages, election_in_progress, amILeader, numRobots, onAckLists
     message = msg.payload.decode()
     if msg.topic == TOPIC_ELECTION_ID:
         # TODO: if the robot is error, it will not be able to receive the message!
@@ -63,24 +67,55 @@ def on_message(client, userdata, msg):
         elect_captain(stub, userdata, client)
     elif msg.topic == TOPIC_ONLINE and amILeader:
         onlineLists.add(message)
-        client.publish(TOPIC_NUM_ONLINE, f"{len(onlineLists)}")
+        numRobots = len(onlineLists)
+        client.publish(TOPIC_NUM_ONLINE, f"{numRobots}")
     elif msg.topic == TOPIC_NUM_ONLINE:
         # print(f"\n📡 Received message on topic '{msg.topic}': {message}\n🤖 {userdata} > ", end="")
         if not amILeader:
-            # as long as the other follower receive the number of online robots, I will reset the timer
-            # if not then the other robot will start the election
+            # as long as the other follower receive the number of online robots from me, the captain will reset the timer
+            # if the we as the other follower could not get  then the other robot will start the election
             # Reset the timer if the message is received
             if hasattr(client, 'leader_check_timer'):
                 client.leader_check_timer.cancel()
-            client.leader_check_timer = threading.Timer(5, elect_captain, args=(stub, userdata, client))
+            client.leader_check_timer = threading.Timer(2, elect_captain, args=(stub, userdata, client))
             client.leader_check_timer.start()
         else:
             # Ensure the timer is off if amILeader is true
             if hasattr(client, 'leader_check_timer'):
                 client.leader_check_timer.cancel()
+    elif msg.topic == TOPIC_ACK_LEADER:
+        # print(f"\n📡 Received message on topic '{msg.topic}': {message}\n🤖 {userdata} > ", end="")
+        other_robot, my_id= message.split(":")
+        if my_id == userdata:
+            print(f"\n📡 Received message on topic '{msg.topic}': {message}\n🤖 {userdata} > ", end="")
+            onAckLists.add(other_robot)
+            # Only check the length after some time, but make sure it is only being executed once!
+            # else do re-election, because some robot online but does not acknoledge the leader!!
+            if not hasattr(client, 'ack_check_thread') or not client.ack_check_thread.is_alive():
+                client.ack_check_thread = threading.Thread(target=check_acknowledgements, args=(client,userdata), daemon=True)
+                client.ack_check_thread.start()
+        # else:
+        #     # Somebody else is the leader, then do re-election
+        #     client.publish(TOPIC_ELECTION_REQUEST, f"{other_robot} have chosen another leader. Do another election!")
+        #     elect_captain(stub, userdata, client) 
+        
+    elif msg.topic == TOPIC_HI:
+        print(f"\n📡 Received message on topic '{msg.topic}': {message}\n🤖 {userdata} > ", end="")
+        
         
     sys.stdout.flush()
 
+def check_acknowledgements(client,userdata):
+            global onAckLists, numRobots, amILeader
+            time.sleep(5)  # Wait for 5 seconds before checking
+            if len(onAckLists) == numRobots - 1: # -1 because the leader does not need to acknowledge itself
+                client.publish(TOPIC_HI, f"{userdata} is your leader, thank you")
+                onAckLists.clear()
+            else:
+                print(f"\n📡 Not all robots (should be {numRobots} Robots) acknowledged the leader. Re-election will be triggered by {userdata}...\n🤖 {userdata} > ", end="")
+                # Re-election if not all robots acknowledged
+                client.publish(TOPIC_ELECTION_REQUEST, f"{userdata} requests re-election due to missing acknowledgements")
+                elect_captain(stub, userdata, client)
 
 def start_message_listener(robot_id, stop_event, client):
     """
@@ -133,6 +168,7 @@ def leader_election(stub, client, robot_id, election_id):
         else:
             amILeader = False
             onlineLists.clear()
+            client.publish(TOPIC_ACK_LEADER, f"{robot_id}:{leader}")
             print(f"🏅 Leader elected: {leader} with election ID {clients_messages[leader]}\n🤖 {robot_id} > ", end="")
     else:
         print(f"⚠️ No responses received. No leader elected.\n🤖 {robot_id} > ", end="")

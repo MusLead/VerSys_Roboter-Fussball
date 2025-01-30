@@ -18,7 +18,7 @@ import robot_controller_pb2_grpc
 
 data_store = {
     "robots": {},
-    "current_captain": "Captain A",
+    "current_captain": "Unknown Captain",
     "controller_status": "Healthy",
     "dummy_data": ""
 }
@@ -72,7 +72,7 @@ class RobotControllerServicer(robot_controller_pb2_grpc.RobotControllerServicer)
 
             return robot_controller_pb2.StatusResponse(message=info)
         else:
-            return robot_controller_pb2.StatusResponse(message="Robot not registered")
+            return robot_controller_pb2.StatusResponse(message="Robot is not registered")
 
     def ElectCaptain(self, request, context):
         # Generate a unique and random election ID
