@@ -62,13 +62,6 @@ class RobotControllerServicer(robot_controller_pb2_grpc.RobotControllerServicer)
         if request.id in self.data_store["robots"]:
             self.data_store["robots"][request.id]["status"] = request.status
             print(f"Status updated for: {request.id} is {request.status}")
-
-            # No need to send election request, because the election will be automatically done by the robot
-            # additional_info = ""  # Ensure the variable is always defined
-            # if request.status == "Error" or request.status == "error":
-            #     additional_info = f" {request.id} is unavailable. Election will be started!"
-            #     election_command(additional_info=additional_info)
-
             info = "Status updated: " + request.status  # Simplified concatenation
 
             return robot_controller_pb2.StatusResponse(message=info)
