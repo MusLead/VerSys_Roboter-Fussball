@@ -29,6 +29,7 @@ amILeader = False # Flag to indicate if I am the leader
 onlineLists = set()
 onAckLists = set()
 numRobots = 0
+isError = False
 
 INVALID_INPUT_MESSAGE = "Invalid input. Please write 'help' for further information."
 
@@ -50,8 +51,12 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, msg):
     global stub, clients_messages, election_in_progress, amILeader, numRobots, onAckLists
     message = msg.payload.decode()
+    if isError:
+        # Do not execute any action if an error occurred
+        if msg.topic != TOPIC_ONLINE and msg.topic != TOPIC_NUM_ONLINE:
+            print(f"\n📡 (ERROR) Received message on topic '{msg.topic}': {message}.\nNO ACTION WILL BE EXECUTED!\n🤖 {userdata} > ", end="")
+        return
     if msg.topic == TOPIC_ELECTION_ID:
-        # TODO: if the robot is error, it will not be able to receive the message!
         print(f"\n📡 Received message on topic '{msg.topic}': {message}\n🤖 {userdata} > ", end="")
         other_robot_id, election_id = message.split(":")
         if other_robot_id != userdata:
@@ -129,8 +134,9 @@ def start_message_listener(robot_id, stop_event, client):
     client.loop_start()
 
     while not stop_event.is_set():
-        # TODO: if error do not send online message!
-        client.publish(TOPIC_ONLINE, f"{robot_id}")
+        # if error do not send online message!
+        if not isError:
+            client.publish(TOPIC_ONLINE, f"{robot_id}")
         time.sleep(1)
 
     client.loop_stop()
@@ -332,6 +338,9 @@ def convert_input_to_int(user_input, is_entered):
 def process_user_command(user_input_int, robot_id, stub, stop_event, client):
     if user_input_int == 1:
         status = input("Enter the health status: ").strip()
+        if status == "Error" or status == "error":
+            global isError
+            isError = True
         send_status_update(stub, robot_id, status)
     elif user_input_int == 2:
         elect_captain(stub, robot_id, client)
