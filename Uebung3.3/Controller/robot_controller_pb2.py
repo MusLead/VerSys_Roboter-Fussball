@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x16robot_controller.proto\"\x17\n\tRobotInfo\x12\n\n\x02id\x18\x01 \x01(\t\"\'\n\x14RegistrationResponse\x12\x0f\n\x07message\x18\x01 \x01(\t\")\n\x0bRobotStatus\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0e\n\x06status\x18\x02 \x01(\t\"!\n\x0eStatusResponse\x12\x0f\n\x07message\x18\x01 \x01(\t\"\x10\n\x0e\x43\x61ptainRequest\"&\n\x0f\x43\x61ptainResponse\x12\x13\n\x0bnew_captain\x18\x01 \x01(\t2\xdb\x01\n\x0fRobotController\x12\x32\n\rRegisterRobot\x12\n.RobotInfo\x1a\x15.RegistrationResponse\x12+\n\nSendStatus\x12\x0c.RobotStatus\x1a\x0f.StatusResponse\x12\x31\n\x0c\x45lectCaptain\x12\x0f.CaptainRequest\x1a\x10.CaptainResponse\x12\x34\n\x0fUnregisterRobot\x12\n.RobotInfo\x1a\x15.RegistrationResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x16robot_controller.proto\"\x17\n\tRobotInfo\x12\n\n\x02id\x18\x01 \x01(\t\"\'\n\x14RegistrationResponse\x12\x0f\n\x07message\x18\x01 \x01(\t\")\n\x0bRobotStatus\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0e\n\x06status\x18\x02 \x01(\t\"!\n\x0eStatusResponse\x12\x0f\n\x07message\x18\x01 \x01(\t\"\x11\n\x0f\x45lectionRequest\"\x1e\n\x10\x45lectionResponse\x12\n\n\x02id\x18\x01 \x01(\t2\x93\x02\n\x0fRobotController\x12\x32\n\rRegisterRobot\x12\n.RobotInfo\x1a\x15.RegistrationResponse\x12+\n\nSendStatus\x12\x0c.RobotStatus\x1a\x0f.StatusResponse\x12\x33\n\x0c\x45lectCaptain\x12\x10.ElectionRequest\x1a\x11.ElectionResponse\x12\x34\n\x0fUnregisterRobot\x12\n.RobotInfo\x1a\x15.RegistrationResponse\x12\x34\n\x0fRegisterCaptain\x12\n.RobotInfo\x1a\x15.RegistrationResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -39,10 +39,10 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_ROBOTSTATUS']._serialized_end=133
   _globals['_STATUSRESPONSE']._serialized_start=135
   _globals['_STATUSRESPONSE']._serialized_end=168
-  _globals['_CAPTAINREQUEST']._serialized_start=170
-  _globals['_CAPTAINREQUEST']._serialized_end=186
-  _globals['_CAPTAINRESPONSE']._serialized_start=188
-  _globals['_CAPTAINRESPONSE']._serialized_end=226
-  _globals['_ROBOTCONTROLLER']._serialized_start=229
-  _globals['_ROBOTCONTROLLER']._serialized_end=448
+  _globals['_ELECTIONREQUEST']._serialized_start=170
+  _globals['_ELECTIONREQUEST']._serialized_end=187
+  _globals['_ELECTIONRESPONSE']._serialized_start=189
+  _globals['_ELECTIONRESPONSE']._serialized_end=219
+  _globals['_ROBOTCONTROLLER']._serialized_start=222
+  _globals['_ROBOTCONTROLLER']._serialized_end=497
 # @@protoc_insertion_point(module_scope)

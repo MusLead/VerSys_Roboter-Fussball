@@ -47,6 +47,7 @@ def on_message(client, userdata, msg):
     global stub, clients_messages, election_in_progress, amILeader
     message = msg.payload.decode()
     if msg.topic == TOPIC_ELECTION_ID:
+        # TODO: if the robot is error, it will not be able to receive the message!
         print(f"\n📡 Received message on topic '{msg.topic}': {message}\n🤖 {userdata} > ", end="")
         other_robot_id, election_id = message.split(":")
         if other_robot_id != userdata:
@@ -93,6 +94,7 @@ def start_message_listener(robot_id, stop_event, client):
     client.loop_start()
 
     while not stop_event.is_set():
+        # TODO: if error do not send online message!
         client.publish(TOPIC_ONLINE, f"{robot_id}")
         time.sleep(1)
 
@@ -100,12 +102,13 @@ def start_message_listener(robot_id, stop_event, client):
     client.disconnect()
 
 
-def leader_election(client, robot_id, election_id):
+def leader_election(stub, client, robot_id, election_id):
     """
     Perform leader election by broadcasting an election ID and determining
     the leader based on the highest election ID.
     
     Args:
+        stub (robot_controller_pb2_grpc.RobotControllerStub): The gRPC stub instance
         client (mqtt.Client): The MQTT client instance.
         robot_id (str): The unique identifier for this robot/client.
     """
@@ -125,6 +128,7 @@ def leader_election(client, robot_id, election_id):
         leader = max(clients_messages, key=clients_messages.get)
         if leader == robot_id:
             print(f"🏅 I am the leader with election ID {election_id}\n🤖 {robot_id} > ", end="")
+            register_captain(stub, robot_id)
             amILeader = True
         else:
             amILeader = False
@@ -167,16 +171,22 @@ def elect_captain(stub, robot_id, client):
         return
 
     election_in_progress = True  # Set the flag
-    captain_request = robot_controller_pb2.CaptainRequest()
+    captain_request = robot_controller_pb2.ElectionRequest()
     response = stub.ElectCaptain(captain_request)
 
-    election_id = response.new_captain
+    election_id = response.id
     print(f"> ElectionID: {election_id}")
     sys.stdout.flush()
     # leader_election(client, robot_id, election_id)
     # Start a new thread for leader election
-    election_thread = threading.Thread(target=leader_election, args=(client, robot_id, election_id), daemon=True)
+    election_thread = threading.Thread(target=leader_election, args=(stub, client, robot_id, election_id), daemon=True)
     election_thread.start()
+
+def register_captain(stub, robot_id):
+    robot_info = robot_controller_pb2.RobotInfo(id=robot_id)
+    response = stub.RegisterCaptain(robot_info)
+    print(f"📩 Server response to {robot_id}: {response.message}")
+    sys.stdout.flush()
 
 
 

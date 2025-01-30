@@ -89,7 +89,7 @@ class RobotControllerServicer(robot_controller_pb2_grpc.RobotControllerServicer)
                 break
 
         # Respond to the robot with the unique election ID
-        return robot_controller_pb2.CaptainResponse(new_captain=election_id)
+        return robot_controller_pb2.ElectionResponse(id=election_id)
 
     def UnregisterRobot(self, request, context):
         if request.id in self.data_store["robots"]:
@@ -101,6 +101,14 @@ class RobotControllerServicer(robot_controller_pb2_grpc.RobotControllerServicer)
             additional_info = ", election will be started!"
 
             return robot_controller_pb2.RegistrationResponse(message="Robot unregistered" + additional_info)
+        else:
+            return robot_controller_pb2.RegistrationResponse(message="Robot not registered")
+        
+    def RegisterCaptain(self, request, context):
+        if request.id in self.data_store["robots"]:
+            self.data_store["current_captain"] = request.id
+            print(f"Captain {request.id} registered")
+            return robot_controller_pb2.RegistrationResponse(message="Captain registered")
         else:
             return robot_controller_pb2.RegistrationResponse(message="Robot not registered")
 

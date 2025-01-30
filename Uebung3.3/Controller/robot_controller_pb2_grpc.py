@@ -46,11 +46,16 @@ class RobotControllerStub(object):
                 _registered_method=True)
         self.ElectCaptain = channel.unary_unary(
                 '/RobotController/ElectCaptain',
-                request_serializer=robot__controller__pb2.CaptainRequest.SerializeToString,
-                response_deserializer=robot__controller__pb2.CaptainResponse.FromString,
+                request_serializer=robot__controller__pb2.ElectionRequest.SerializeToString,
+                response_deserializer=robot__controller__pb2.ElectionResponse.FromString,
                 _registered_method=True)
         self.UnregisterRobot = channel.unary_unary(
                 '/RobotController/UnregisterRobot',
+                request_serializer=robot__controller__pb2.RobotInfo.SerializeToString,
+                response_deserializer=robot__controller__pb2.RegistrationResponse.FromString,
+                _registered_method=True)
+        self.RegisterCaptain = channel.unary_unary(
+                '/RobotController/RegisterCaptain',
                 request_serializer=robot__controller__pb2.RobotInfo.SerializeToString,
                 response_deserializer=robot__controller__pb2.RegistrationResponse.FromString,
                 _registered_method=True)
@@ -83,6 +88,12 @@ class RobotControllerServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def RegisterCaptain(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_RobotControllerServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -98,11 +109,16 @@ def add_RobotControllerServicer_to_server(servicer, server):
             ),
             'ElectCaptain': grpc.unary_unary_rpc_method_handler(
                     servicer.ElectCaptain,
-                    request_deserializer=robot__controller__pb2.CaptainRequest.FromString,
-                    response_serializer=robot__controller__pb2.CaptainResponse.SerializeToString,
+                    request_deserializer=robot__controller__pb2.ElectionRequest.FromString,
+                    response_serializer=robot__controller__pb2.ElectionResponse.SerializeToString,
             ),
             'UnregisterRobot': grpc.unary_unary_rpc_method_handler(
                     servicer.UnregisterRobot,
+                    request_deserializer=robot__controller__pb2.RobotInfo.FromString,
+                    response_serializer=robot__controller__pb2.RegistrationResponse.SerializeToString,
+            ),
+            'RegisterCaptain': grpc.unary_unary_rpc_method_handler(
+                    servicer.RegisterCaptain,
                     request_deserializer=robot__controller__pb2.RobotInfo.FromString,
                     response_serializer=robot__controller__pb2.RegistrationResponse.SerializeToString,
             ),
@@ -186,8 +202,8 @@ class RobotController(object):
             request,
             target,
             '/RobotController/ElectCaptain',
-            robot__controller__pb2.CaptainRequest.SerializeToString,
-            robot__controller__pb2.CaptainResponse.FromString,
+            robot__controller__pb2.ElectionRequest.SerializeToString,
+            robot__controller__pb2.ElectionResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -213,6 +229,33 @@ class RobotController(object):
             request,
             target,
             '/RobotController/UnregisterRobot',
+            robot__controller__pb2.RobotInfo.SerializeToString,
+            robot__controller__pb2.RegistrationResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def RegisterCaptain(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/RobotController/RegisterCaptain',
             robot__controller__pb2.RobotInfo.SerializeToString,
             robot__controller__pb2.RegistrationResponse.FromString,
             options,
