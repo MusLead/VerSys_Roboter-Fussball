@@ -8,6 +8,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         curl \
+        # For Ubuntu/Debian 
+        mosquitto-clients \  
         openjdk-17-jdk \
         python3 \
         python3-pip \
@@ -24,7 +26,8 @@ RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3
 RUN python3 -m pip install --upgrade pip
 
 # Install the grpcio library and required dependencies
-RUN python3 -m pip install grpcio grpcio-tools protobuf stomp.py
+# https://stackoverflow.com/questions/77984857/paho-mqtt-unsupported-callback-api-version-error
+RUN python3 -m pip install grpcio grpcio-tools "paho-mqtt<2.0.0" protobuf 
 
 # Set the working directory inside the container
 WORKDIR /code

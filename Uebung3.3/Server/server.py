@@ -1,12 +1,13 @@
+import paho.mqtt.client as mqtt
 import os
 import re
 import socket
 import json
 import signal
 import sys
+import uuid
 import grpc
 import threading
-import stomp
 from concurrent import futures
 from time import sleep
 
@@ -14,7 +15,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../Cont
 
 import robot_controller_pb2
 import robot_controller_pb2_grpc
-import traceback
 
 data_store = {
     "robots": {},
@@ -25,9 +25,17 @@ data_store = {
 
 grpc_server_ready = threading.Event()
 
+# get the IP-Address of the ActiveMQ
 targetBroker = os.getenv("TARGET_SERVER", "localhost")
+BROKER = targetBroker  # Replace with ActiveMQ broker's address
+PORT = 1883  # Default MQTT port
+TOPIC_ELECTION_REQUEST = "election_request"  # Topic for leader election
+client = mqtt.Client("Server")
+sleep(1)
+client.connect(BROKER, PORT)
+client.loop_start()
 
-connection = stomp.Connection([(targetBroker, 61613)])
+server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 def extract_ip(peer_address):
         """Extracts a clean IP (IPv4 or IPv6) from gRPC context.peer()."""
@@ -43,45 +51,59 @@ class RobotControllerServicer(robot_controller_pb2_grpc.RobotControllerServicer)
         self.data_store = shared_data_store
 
     def RegisterRobot(self, request, context):
-        client_ip = context.peer()  # Get the client IP
+        client_ip = extract_ip(context.peer())  # Get the client IP
         self.data_store["robots"][request.id] = {"ip": client_ip, "status": "Unknown"}
         print(f"Robot {request.id} with {client_ip} registered")
+        # this thread makes sure that the election is started after 1 second, so that the robot can get notified first that it is registered
+        threading.Thread(target=lambda: (sleep(1), election_command(additional_info=f"new {request.id} is being registered, election will be started!"))).start()
         return robot_controller_pb2.RegistrationResponse(message="Robot registered")
 
     def SendStatus(self, request, context):
         if request.id in self.data_store["robots"]:
             self.data_store["robots"][request.id]["status"] = request.status
             print(f"Status updated for: {request.id} is {request.status}")
-            
+
             additional_info = ""  # Ensure the variable is always defined
             if request.status == "Error" or request.status == "error":
                 additional_info = f" {request.id} is unavailable. Election will be started!"
                 election_command(additional_info=additional_info)
 
             info = "Status updated" + additional_info  # Simplified concatenation
-            
+
             return robot_controller_pb2.StatusResponse(message=info)
         else:
             return robot_controller_pb2.StatusResponse(message="Robot not registered")
 
     def ElectCaptain(self, request, context):
-        new_captain = "Captain A" if data_store["current_captain"] == "Captain B" else "Captain B"
-        self.data_store["current_captain"] = new_captain
-        print(f"New captain elected: {new_captain}")
-        return robot_controller_pb2.CaptainResponse(new_captain=new_captain)
-    
+        # Generate a unique and random election ID
+        client_ip = extract_ip(context.peer())
+        while True:
+            election_id = str(uuid.uuid4())
+            if not any(robot_info.get("election_id") == election_id for robot_info in self.data_store["robots"].values()):
+                break
+
+        for robot_id, robot_info in self.data_store["robots"].items():
+            if robot_info["ip"] == client_ip:
+                self.data_store["robots"][robot_id]["election_id"] = election_id
+                print(f"Election ID {election_id} generated for robot {robot_id}")
+                break
+
+        # Respond to the robot with the unique election ID
+        return robot_controller_pb2.CaptainResponse(new_captain=election_id)
+
     def UnregisterRobot(self, request, context):
         if request.id in self.data_store["robots"]:
             del self.data_store["robots"][request.id]
             client_ip = context.peer()  # Get the client IP
             print(f"Robot {request.id} with {client_ip} unregistered")
-            
+
             election_command(additional_info=f" robot {request.id} unregistered, election will be started!")
             additional_info = ", election will be started!"
-            
+
             return robot_controller_pb2.RegistrationResponse(message="Robot unregistered" + additional_info)
         else:
             return robot_controller_pb2.RegistrationResponse(message="Robot not registered")
+
 
 def serve():
     """Start gRPC server and set the ready flag."""
@@ -97,7 +119,6 @@ def serve():
 
 def start_http_server():
     """Start HTTP server."""
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     port = 8080
     server_socket.bind(('0.0.0.0', port))
     server_socket.listen(5)
@@ -135,7 +156,7 @@ def handle_get_request(path):
     if path == "/":
         return "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nServer is running"
     elif path == "/election": 
-        election_command(additional_info=" User watns election. Election started!")
+        election_command(additional_info=" User wants election. Election started!")
         return "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nElection command sent to the robots!"
     elif path == "/status":
         return f"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n{json.dumps(data_store)}"
@@ -161,13 +182,14 @@ def handle_post_request(headers, request):
 
 def signal_handler(sig, frame):
     """Gracefully shutdown the HTTP server."""
-    connection.disconnect()
+    server_socket.close()  # Close the server socket
+    client.loop_stop()
+    client.disconnect()
     print('\nServer Gracefully shutting down servers...')
     sys.exit(0)
 
 def election_command(additional_info=""):
-    for _, _ in data_store["robots"].items():
-        connection.send(body='Attention all Robots!!' + additional_info, destination='/queue/robot_commands')
+    client.publish(TOPIC_ELECTION_REQUEST, additional_info)
 
 if __name__ == "__main__":
     # ✅ Register signal handler in the MAIN THREAD
@@ -175,9 +197,6 @@ if __name__ == "__main__":
     signal.signal(signal.SIGTERM, signal_handler)
 
     sleep(1)
-
-    connection.connect('username', 'password', wait=True)
-    print("✅ STOMP connection established")
 
     grpc_thread = threading.Thread(target=serve, daemon=True)
     grpc_thread.start()
