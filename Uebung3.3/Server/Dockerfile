@@ -24,7 +24,7 @@ RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3
 RUN python3 -m pip install --upgrade pip
 
 # Install required Python libraries
-RUN python3 -m pip install grpcio grpcio-tools protobuf "paho-mqtt<2.0.0" protobuf 
+RUN python3 -m pip install grpcio grpcio-tools "paho-mqtt<2.0.0" protobuf protobuf 
 
 # Verify installations
 RUN python3 --version && pip --version && python3 -m pip show grpcio
