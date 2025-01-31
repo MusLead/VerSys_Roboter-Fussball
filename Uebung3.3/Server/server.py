@@ -110,7 +110,6 @@ class RobotControllerServicer(robot_controller_pb2_grpc.RobotControllerServicer)
 
     def CaptainStatus(self, request, context):
         captain = self.data_store["current_captain"]
-        # result = f"{captain} with {self.data_store['robots'][captain]['election_id']}"
         return robot_controller_pb2.RobotInfo(id=captain)
     
     def CheckElectionID(self, request, context):
