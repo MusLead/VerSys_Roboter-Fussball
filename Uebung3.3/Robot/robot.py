@@ -92,6 +92,7 @@ def handle_election_id_message(client, userdata, message,msg):
     if other_robot_id != userdata:
         clients_messages[other_robot_id] = other_election_id  # Store these robot's election ID locally
     if userdata not in clients_messages and not election_in_progress:
+        
         # The Election will be done only if the robots has diffrent election ID than before!
         # we might get an old election ID (because the message is stuk in the queue of ActiveMQ) and we were not available at that time
         # in this case, we do not want to trigger a new election, only if the electionID is totally different
