@@ -24,7 +24,7 @@ TOPIC_NUM_ONLINE = "num_online"  # Topic for number of online robots
 TOPIC_ACK_LEADER = "ack_leader"  # Topic for acknowledging the leader
 TOPIC_HI = "Hi_there"  # Topic for leader election
 
-clients_messages = {}  # For storing messages for leader election
+robots_election_messages = {}  # For storing messages for leader election
 stub = None # gRPC stub instance
 election_in_progress = False  # Flag to indicate if an election is in progress
 amILeader = False # Flag to indicate if I am the leader
@@ -52,7 +52,7 @@ def on_connect(client, userdata, flags, rc):
 
 
 def on_message(client, userdata, msg):
-    global election_in_progress, amILeader, isAcknowledge
+    global election_in_progress, amILeader, isAcknowledge, robots_election_messages
     message = msg.payload.decode()
     
     stat_captain = status_captain(stub)
@@ -86,13 +86,13 @@ def handle_error_message(userdata, msg, message):
         print(f"\n📡 (ERROR) Received message on topic '{msg.topic}': {message}.\nNO ACTION WILL BE EXECUTED!\n🤖 {userdata} > ", end="")
 
 def handle_election_id_message(client, userdata, message,msg):
-    global clients_messages, election_in_progress
+    global robots_election_messages, election_in_progress
     print(f"\n📡 Received message on topic '{msg.topic}': {message}\n🤖 {userdata} > ", end="")
     other_robot_id, other_election_id = message.split(":")
     if other_robot_id != userdata:
-        clients_messages[other_robot_id] = other_election_id  # Store these robot's election ID locally
-    if userdata not in clients_messages and not election_in_progress:
-        
+        robots_election_messages[other_robot_id] = other_election_id  # Store these robot's election ID locally
+    if userdata not in robots_election_messages and not election_in_progress:
+
         # The Election will be done only if the robots has diffrent election ID than before!
         # we might get an old election ID (because the message is stuk in the queue of ActiveMQ) and we were not available at that time
         # in this case, we do not want to trigger a new election, only if the electionID is totally different
@@ -140,7 +140,7 @@ def handle_ack_leader_message(client, userdata, message, msg):
             client.ack_check_thread.start()
 
 def check_acknowledgements(client,userdata):
-            global onAckLists, numRobots, amILeader, isAcknowledge
+            global onAckLists, numRobots, amILeader, isAcknowledge, robots_election_messages
             time.sleep(5)  # Wait for 5 seconds before checking
             acknwoledge_robots = len(onAckLists)
             if acknwoledge_robots == numRobots - 1: # -1 because the leader does not need to acknowledge itself
@@ -148,6 +148,7 @@ def check_acknowledgements(client,userdata):
                 client.publish(TOPIC_HI, f"All {numRobots - 1} robots acknowledged the leader. {userdata} is your leader, thank you")
                 register_captain(stub, userdata)
                 isAcknowledge = True
+                robots_election_messages.clear()
                 onAckLists.clear()
             else:
                 print(f"\n⚠️ Not all robots (There are {acknwoledge_robots} Robots, but it should be {numRobots -1} Robots) acknowledged the leader. Re-election will be triggered by {userdata}...\n🤖 {userdata} > ", end="")
@@ -190,10 +191,10 @@ def leader_election(stub, client, robot_id, election_id):
         client (mqtt.Client): The MQTT client instance.
         robot_id (str): The unique identifier for this robot/client.
     """
-    global clients_messages, election_in_progress, amILeader
+    global robots_election_messages, election_in_progress, amILeader
 
     # Broadcast the election ID to the MQTT topic
-    clients_messages[robot_id] = election_id # Hopefully this will make sure that on_message this function will not be called twice!
+    robots_election_messages[robot_id] = election_id # Hopefully this will make sure that on_message this function will not be called twice!
     print(f"🤖 {robot_id} is broadcasting election ID {election_id}...")
     client.publish(TOPIC_ELECTION_ID, f"{robot_id}:{election_id}")
 
@@ -202,8 +203,8 @@ def leader_election(stub, client, robot_id, election_id):
     time.sleep(5)
 
     # Determine the leader (robot with the highest election ID)
-    if clients_messages:
-        leader = max(clients_messages, key=clients_messages.get)
+    if robots_election_messages:
+        leader = max(robots_election_messages, key=robots_election_messages.get)
         if leader == robot_id:
             print(f"🏅 I am the leader with election ID {election_id}\n🤖 {robot_id} > ", end="")
             # register_captain(stub, robot_id)
@@ -212,12 +213,12 @@ def leader_election(stub, client, robot_id, election_id):
             amILeader = False
             onlineLists.clear()
             client.publish(TOPIC_ACK_LEADER, f"{robot_id}:{leader}")
-            print(f"🏅 Leader elected: {leader} with election ID {clients_messages[leader]}\n🤖 {robot_id} > ", end="")
+            print(f"🏅 Leader elected: {leader} with election ID {robots_election_messages[leader]}\n🤖 {robot_id} > ", end="")
     else:
         print(f"⚠️ No responses received. No leader elected.\n🤖 {robot_id} > ", end="")
     
     # Clear messages for the next election round
-    clients_messages.clear()
+    robots_election_messages.clear()
     election_in_progress = False  # Reset the flag
 
 
@@ -252,6 +253,7 @@ def elect_captain(stub, robot_id, client):
         print(f"⚠️ Robot is in error state. Cannot start election.\n🤖 {robot_id} > ", end="")
         return
     
+    robots_election_messages.clear()
     isAcknowledge = False
 
     election_in_progress = True  # Set the flag
