@@ -14,6 +14,7 @@ import robot_controller_pb2
 import robot_controller_pb2_grpc
 
 targetServer = os.getenv("TARGET_SERVER", "localhost")
+ELECTION_PROMPT = "\n⚠️ Captain has not been elected. Do election!\n"
 BROKER = targetServer  # Replace with ActiveMQ broker's address
 PORT = 1883  # Default MQTT port
 TOPIC_ELECTION_ID = "leader_election_ID"  # Topic for leader election
@@ -31,6 +32,7 @@ onlineLists = set() # Set to store online robots
 onAckLists = set() # Set to store robots that acknowledged the leader
 numRobots = 0 # Number of online robots
 isError = False # Flag to indicate if the robot is in error state
+isAcknowledge = False # Flag to indicate if the robot acknowledged the leader
 
 INVALID_INPUT_MESSAGE = "Invalid input. Please write 'help' for further information."
 
@@ -50,8 +52,18 @@ def on_connect(client, userdata, flags, rc):
 
 
 def on_message(client, userdata, msg):
-    global election_in_progress, amILeader
+    global election_in_progress, amILeader, isAcknowledge
     message = msg.payload.decode()
+    
+    stat_captain = status_captain(stub)
+    if amILeader and stat_captain != userdata and isAcknowledge:
+        # if the captain is not exist, will trigger a new election
+        # therefore we have to check if 
+        amILeader = False
+        if stat_captain == "":
+            print(ELECTION_PROMPT)
+            elect_captain(stub, userdata, client)
+
     if isError:
         handle_error_message(userdata, msg, message)
         return
@@ -76,18 +88,24 @@ def handle_error_message(userdata, msg, message):
 def handle_election_id_message(client, userdata, message,msg):
     global clients_messages, election_in_progress
     print(f"\n📡 Received message on topic '{msg.topic}': {message}\n🤖 {userdata} > ", end="")
-    other_robot_id, election_id = message.split(":")
+    other_robot_id, other_election_id = message.split(":")
     if other_robot_id != userdata:
-        clients_messages[other_robot_id] = election_id  # Store these robot's election ID locally
+        clients_messages[other_robot_id] = other_election_id  # Store these robot's election ID locally
     if userdata not in clients_messages and not election_in_progress:
-        print("🔄 Userdata not found, triggering leader election...")
-        elect_captain(stub, userdata, client)
+        # The Election will be done only if the robots has diffrent election ID than before!
+        # we might get an old election ID (because the message is stuk in the queue of ActiveMQ) and we were not available at that time
+        # in this case, we do not want to trigger a new election, only if the electionID is totally different
+        # old election ID check_election_id(other_robot_id) != other_election_id that we got from the other robot
+        if check_election_id(stub, other_robot_id) != other_election_id:
+            print("🔄 Userdata not found, triggering leader election...")
+            elect_captain(stub, userdata, client)
 
 def handle_election_request_message(client, userdata, message,msg):
     global election_in_progress
     print(f"\n📡 Received message on topic '{msg.topic}': {message}\n🤖 {userdata} > ", end="")
-    while election_in_progress:
-        time.sleep(1)
+    if election_in_progress:
+        return # because the election is already in progress, no further election will be triggered!
+    print("🏁 Someone sent me an election requests, then starts captain election...")
     elect_captain(stub, userdata, client)
 
 def handle_online_message(client, message):
@@ -97,10 +115,14 @@ def handle_online_message(client, message):
     client.publish(TOPIC_NUM_ONLINE, f"{numRobots}")
 
 def handle_num_online_message(client, userdata):
+    # The leader send the number of online robots periodically
     if not amILeader:
+        # Therefore if the robot is not the leader, it will check if the leader is still alive
+        # if not, in 2 seconds it will trigger a new election
+        # otherwise it will cancel the timer every time it receives the number of online robots
         if hasattr(client, 'leader_check_timer'):
             client.leader_check_timer.cancel()
-        client.leader_check_timer = threading.Timer(2, elect_captain, args=(stub, userdata, client))
+        client.leader_check_timer = threading.Timer(2, lambda: (print("🏁 Triggering re-election due to leader check timeout"), elect_captain(stub, userdata, client)))
         client.leader_check_timer.start()
     else:
         if hasattr(client, 'leader_check_timer'):
@@ -117,16 +139,24 @@ def handle_ack_leader_message(client, userdata, message, msg):
             client.ack_check_thread.start()
 
 def check_acknowledgements(client,userdata):
-            global onAckLists, numRobots, amILeader
+            global onAckLists, numRobots, amILeader, isAcknowledge
             time.sleep(5)  # Wait for 5 seconds before checking
-            if len(onAckLists) == numRobots - 1: # -1 because the leader does not need to acknowledge itself
-                client.publish(TOPIC_HI, f"{userdata} is your leader, thank you")
+            acknwoledge_robots = len(onAckLists)
+            if acknwoledge_robots == numRobots - 1: # -1 because the leader does not need to acknowledge itself
+                print(f"\n🏅 All {numRobots - 1} robots acknowledged the leader. {userdata} is the leader.\n🤖 {userdata} > ", end="")
+                client.publish(TOPIC_HI, f"All {numRobots - 1} robots acknowledged the leader. {userdata} is your leader, thank you")
+                register_captain(stub, userdata)
+                isAcknowledge = True
                 onAckLists.clear()
             else:
-                print(f"\n📡 Not all robots (should be {numRobots} Robots) acknowledged the leader. Re-election will be triggered by {userdata}...\n🤖 {userdata} > ", end="")
+                print(f"\n⚠️ Not all robots (There are {acknwoledge_robots} Robots, but it should be {numRobots -1} Robots) acknowledged the leader. Re-election will be triggered by {userdata}...\n🤖 {userdata} > ", end="")
                 # Re-election if not all robots acknowledged
-                client.publish(TOPIC_ELECTION_REQUEST, f"{userdata} requests re-election due to missing acknowledgements")
+                client.publish(TOPIC_ELECTION_REQUEST, f"{userdata} requests re-election due to missing acknowledgements. Not all robots (There are {acknwoledge_robots} Robots, but it should be {numRobots - 1} Robots) acknowledged the leader.")
                 elect_captain(stub, userdata, client)
+                if acknwoledge_robots > numRobots - 1: # Debugging purpose
+                    client.publish(TOPIC_HI, f"⚠️ {userdata} received more acknowledgements than expected. {onAckLists} acknowledged the leader.")
+                onAckLists.clear()
+                
 
 def start_message_listener(robot_id, stop_event, client):
     """
@@ -175,7 +205,7 @@ def leader_election(stub, client, robot_id, election_id):
         leader = max(clients_messages, key=clients_messages.get)
         if leader == robot_id:
             print(f"🏅 I am the leader with election ID {election_id}\n🤖 {robot_id} > ", end="")
-            register_captain(stub, robot_id)
+            # register_captain(stub, robot_id)
             amILeader = True
         else:
             amILeader = False
@@ -213,23 +243,27 @@ def unregister_with_controller(stub, robot_id):
 
 
 def elect_captain(stub, robot_id, client):
-    global election_in_progress
+    global election_in_progress, isAcknowledge
     if election_in_progress:
         print(f"⚠️ Election already in progress. Ignoring request.\n🤖 {robot_id} > ", end="")
         return
     if isError:
         print(f"⚠️ Robot is in error state. Cannot start election.\n🤖 {robot_id} > ", end="")
         return
+    
+    isAcknowledge = False
 
     election_in_progress = True  # Set the flag
     captain_request = robot_controller_pb2.ElectionRequest()
     response = stub.ElectCaptain(captain_request)
 
     election_id = response.id
-    print(f"> ElectionID: {election_id}")
+    print(f"📩 ElectionID: {election_id}")
     sys.stdout.flush()
-    # leader_election(client, robot_id, election_id)
+    
     # Start a new thread for leader election
+    # We create a new thread to avoid blocking the main thread. THis thread should wait for the responses
+    # from the other robots.
     election_thread = threading.Thread(target=leader_election, args=(stub, client, robot_id, election_id), daemon=True)
     election_thread.start()
 
@@ -239,6 +273,20 @@ def register_captain(stub, robot_id):
     print(f"📩 Server response to {robot_id}: {response.message}")
     sys.stdout.flush()
 
+def status_captain(stub):
+    captain_status_request = robot_controller_pb2.CaptainStatusRequest()
+    response = stub.CaptainStatus(captain_status_request)
+    if response.id == "":
+        return ""
+    else:
+        return response.id
+    
+def check_election_id(stub, robot_id):
+    robot_info = robot_controller_pb2.RobotInfo(id=robot_id)
+    response = stub.CheckElectionID(robot_info)
+    print(f"📩 Server response to {robot_id}: {response.message}")
+    sys.stdout.flush()
+    return response.message
 
 
 # Context Manager for gRPC Channel
@@ -259,6 +307,7 @@ def print_help():
     print("  2  → Start captain election")
     print("  3  → Quit program")
     print("  4  → Broadcast Hi")
+    print("  5 → Ask, who is the captain?")
     print("\n📢 To detach from Docker: Press 'Ctrl + P', then 'Ctrl + Q'\n")
     sys.stdout.flush()
 
@@ -290,6 +339,15 @@ def main(robot_id):
         # Start user input handling in a separate thread
         input_thread = threading.Thread(target=handle_user_input, args=(robot_id, stub, stop_event, client), daemon=True)
         input_thread.start()
+
+        # Check if the captain is still alive/exists
+        # if not, the robot will trigger a new election)
+        captain_name = status_captain(stub)
+        if captain_name != "":
+            print(f"\n🤖 Captain recognized: {captain_name}\n")
+        else:
+            print(ELECTION_PROMPT)
+            elect_captain(stub, robot_id, client)
 
         # Keep main thread alive
         listener_thread.join()
@@ -350,6 +408,7 @@ def process_user_command(user_input_int, robot_id, stub, stop_event, client):
             isError = False
         send_status_update(stub, robot_id, status)
     elif user_input_int == 2:
+        print("🏁 Let's start captain election...")
         elect_captain(stub, robot_id, client)
     elif user_input_int == 3:
         unregister_with_controller(stub, robot_id)
@@ -359,6 +418,13 @@ def process_user_command(user_input_int, robot_id, stub, stop_event, client):
         return True
     elif user_input_int == 4:
         client.publish(TOPIC_HI, "hi")
+    elif user_input_int == 5:
+        captain_name = status_captain(stub)
+        if captain_name != "":
+            print(f"\n🤖 Captain recognized: {captain_name}\n")
+        else:
+            print(ELECTION_PROMPT)
+            elect_captain(stub, robot_id, client)
     else:
         print(f"Int: {INVALID_INPUT_MESSAGE}")
     return False

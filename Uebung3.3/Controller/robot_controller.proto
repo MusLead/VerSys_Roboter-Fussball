@@ -6,6 +6,8 @@ service RobotController {
   rpc ElectCaptain (ElectionRequest) returns (ElectionResponse);
   rpc UnregisterRobot (RobotInfo) returns (RegistrationResponse);
   rpc RegisterCaptain (RobotInfo) returns (RegistrationResponse);
+  rpc CaptainStatus (CaptainStatusRequest) returns (RobotInfo);  
+  rpc CheckElectionID (ElectionResponse) returns (StatusResponse);
 }
 
 message RobotInfo {
@@ -26,6 +28,8 @@ message StatusResponse {
 }
 
 message ElectionRequest {}
+
+message CaptainStatusRequest {}
 
 message ElectionResponse {
   string id = 1;

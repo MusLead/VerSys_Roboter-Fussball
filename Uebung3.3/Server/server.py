@@ -18,7 +18,7 @@ import robot_controller_pb2_grpc
 
 data_store = {
     "robots": {},
-    "current_captain": "Unknown Captain",
+    "current_captain": "",
     "controller_status": "Healthy",
     "dummy_data": ""
 }
@@ -55,7 +55,8 @@ class RobotControllerServicer(robot_controller_pb2_grpc.RobotControllerServicer)
         self.data_store["robots"][request.id] = {"ip": client_ip, "status": "Unknown"}
         print(f"Robot {request.id} with {client_ip} registered")
         # this thread makes sure that the election is started after 1 second, so that the robot can get notified first that it is registered
-        threading.Thread(target=lambda: (sleep(1), election_command(additional_info=f"new {request.id} is being registered, election will be started!"))).start()
+        # Update: we only want to start the election if there is no captain yet
+        # threading.Thread(target=lambda: (sleep(1), election_command(additional_info=f"new {request.id} is being registered, election will be started!"))).start()
         return robot_controller_pb2.RegistrationResponse(message="Robot registered")
 
     def SendStatus(self, request, context):
@@ -91,7 +92,8 @@ class RobotControllerServicer(robot_controller_pb2_grpc.RobotControllerServicer)
             client_ip = context.peer()  # Get the client IP
             print(f"Robot {request.id} with {client_ip} unregistered")
 
-            election_command(additional_info=f" robot {request.id} unregistered, election will be started!")
+            # Update: we only want to start the election if the robot that is unregistered is the captain
+            # election_command(additional_info=f" robot {request.id} unregistered, election will be started!")
             additional_info = ", election will be started!"
 
             return robot_controller_pb2.RegistrationResponse(message="Robot unregistered" + additional_info)
@@ -105,6 +107,18 @@ class RobotControllerServicer(robot_controller_pb2_grpc.RobotControllerServicer)
             return robot_controller_pb2.RegistrationResponse(message="Captain registered")
         else:
             return robot_controller_pb2.RegistrationResponse(message="Robot not registered")
+
+    def CaptainStatus(self, request, context):
+        captain = self.data_store["current_captain"]
+        # result = f"{captain} with {self.data_store['robots'][captain]['election_id']}"
+        return robot_controller_pb2.RobotInfo(id=captain)
+    
+    def CheckElectionID(self, request, context):
+        if request.id in self.data_store["robots"]:
+            election_id = self.data_store["robots"][request.id].get("election_id", "")
+            return robot_controller_pb2.ElectionResponse(id=election_id)
+        else:
+            return robot_controller_pb2.ElectionResponse(id="")
 
 
 def serve():
