@@ -154,7 +154,7 @@ def check_acknowledgements(client,userdata):
                 print(f"\n⚠️ Not all robots (There are {acknwoledge_robots} Robots, but it should be {numRobots -1} Robots) acknowledged the leader. Re-election will be triggered by {userdata}...\n🤖 {userdata} > ", end="")
                 # Re-election if not all robots acknowledged
                 client.publish(TOPIC_ELECTION_REQUEST, f"{userdata} requests re-election due to missing acknowledgements. Not all robots (There are {acknwoledge_robots} Robots, but it should be {numRobots - 1} Robots) acknowledged the leader.")
-                elect_captain(stub, userdata, client)
+                # elect_captain(stub, userdata, client)
                 if acknwoledge_robots > numRobots - 1: # Debugging purpose
                     client.publish(TOPIC_HI, f"⚠️ {userdata} received more acknowledgements than expected. {onAckLists} acknowledged the leader.")
                 onAckLists.clear()
