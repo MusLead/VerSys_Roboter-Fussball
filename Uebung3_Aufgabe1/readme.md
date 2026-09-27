@@ -1,4 +1,4 @@
-# Übung 3.1
+# Übung 3 Aufgabe 1
 
 In this exercise we have two containers, `Server` and `Client`. They are a simple HTTP server-client communication that will be used for the future task.
 
